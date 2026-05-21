@@ -29,6 +29,7 @@ function sumAction(actions, regex) {
 export default async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (!checkToken(req)) return json({ error: "token invalido" }, 401);
+ try {
 
   const token = process.env.META_TOKEN;
   if (!token) return json({ error: "META_TOKEN nao configurado" }, 400);
@@ -40,9 +41,15 @@ export default async (req) => {
   const v = process.env.META_API_VERSION || "v22.0";
   const sp = new URL(req.url).searchParams;
   const preset = sp.get("preset") || "last_14d";
-  // ?acc=ID processa só uma conta (divide a carga e evita timeout)
-  const only = sp.get("acc");
-  const accounts = only ? accountsAll.filter((a) => a === only) : accountsAll;
+  // normaliza: remove "act_" e espaços para comparar IDs com segurança
+  const norm = (s) => String(s || "").trim().replace(/^act_/i, "");
+  // ?acc=ID processa só uma conta. Se não casar, cai pra todas (nunca vazio).
+  const only = norm(sp.get("acc"));
+  let accounts = accountsAll.map(norm);
+  if (only) {
+    const match = accounts.filter((a) => a === only);
+    if (match.length) accounts = match;
+  }
 
   const campaigns = [];
   const admap = {};
@@ -52,8 +59,8 @@ export default async (req) => {
   // campos: gasto, impressoes, cliques, video, e o budget vem da campanha
   const fields = [
     "campaign_id", "campaign_name", "ad_id",
-    "spend", "impressions", "reach", "clicks", "inline_link_clicks",
-    "cpm", "ctr", "actions", "action_values",
+    "spend", "impressions", "clicks", "inline_link_clicks",
+    "actions", "action_values",
     "video_play_actions", "video_thruplay_watched_actions",
     "video_p25_watched_actions", "video_p100_watched_actions",
   ].join(",");
@@ -62,7 +69,7 @@ export default async (req) => {
     const url =
       `https://graph.facebook.com/${v}/act_${acc}/insights` +
       `?level=ad&date_preset=${preset}&time_increment=1&fields=${fields}` +
-      `&limit=300&access_token=${encodeURIComponent(token)}`;
+      `&limit=100&access_token=${encodeURIComponent(token)}`;
 
     let rows;
     try { rows = await fetchAll(url, deadline); }
@@ -114,4 +121,7 @@ export default async (req) => {
 
   await writeArr("admap", Object.entries(admap).map(([adId, m]) => ({ adId, ...m })));
   return json({ campaigns, preset, accountsAll });
+ } catch (e) {
+   return json({ error: "meta-sync: " + String(e && e.message || e) }, 200);
+ }
 };
