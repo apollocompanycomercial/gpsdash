@@ -1,13 +1,12 @@
-// meta-sync.js — puxa investimento + conversas do Meta Ads (nivel CAMPANHA)
-//   https://SEU-SITE.netlify.app/.netlify/functions/meta-sync?token=SEU_TOKEN
-//   ...&preset=today | last_7d | last_30d   (padrao: last_14d)
+// meta-sync.js — puxa metricas completas do Meta Ads por CAMPANHA
+//   /.netlify/functions/meta-sync?token=SEU_TOKEN&preset=last_14d
+// presets: today, yesterday, last_7d, last_14d, last_30d, last_90d, this_month, last_month
 // Envs: META_TOKEN, META_ACCOUNTS, META_API_VERSION (opcional)
 import { writeArr, checkToken, json } from "./_store.js";
 
-// segue a paginacao da Graph API
 async function fetchAll(url) {
   let rows = [], next = url, guard = 0;
-  while (next && guard < 25) {
+  while (next && guard < 30) {
     const r = await fetch(next);
     const d = await r.json();
     if (d.error) throw new Error(d.error.message);
@@ -18,30 +17,44 @@ async function fetchAll(url) {
   return rows;
 }
 
+// soma um action_type especifico da lista de actions
+function sumAction(actions, regex) {
+  let t = 0;
+  (actions || []).forEach((a) => { if (regex.test(a.action_type)) t += Number(a.value) || 0; });
+  return t;
+}
+
 export default async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (!checkToken(req)) return json({ error: "token invalido" }, 401);
 
   const token = process.env.META_TOKEN;
-  if (!token) return json({ error: "META_TOKEN nao configurado no Netlify" }, 400);
+  if (!token) return json({ error: "META_TOKEN nao configurado" }, 400);
 
   const accounts = (process.env.META_ACCOUNTS || "")
     .split(",").map((s) => s.trim()).filter(Boolean);
-  if (!accounts.length) return json({ error: "META_ACCOUNTS nao configurado no Netlify" }, 400);
+  if (!accounts.length) return json({ error: "META_ACCOUNTS nao configurado" }, 400);
 
   const v = process.env.META_API_VERSION || "v22.0";
   const preset = new URL(req.url).searchParams.get("preset") || "last_14d";
 
-  const campaigns = [];          // {metaId, campaignId, campaignName, days:[{date,investimento,conversas}]}
-  const admap = {};              // adId -> {campaignId, campaignName}
+  const campaigns = [];
+  const admap = {};
+
+  // campos: gasto, impressoes, cliques, video, e o budget vem da campanha
+  const fields = [
+    "campaign_id", "campaign_name", "ad_id",
+    "spend", "impressions", "reach", "clicks", "inline_link_clicks",
+    "cpm", "ctr", "actions", "action_values",
+    "video_play_actions", "video_thruplay_watched_actions",
+    "video_p25_watched_actions", "video_p100_watched_actions",
+  ].join(",");
 
   for (const acc of accounts) {
-    // 1 chamada por conta a nivel de anuncio: da o gasto E o mapa ad->campanha
     const url =
       `https://graph.facebook.com/${v}/act_${acc}/insights` +
-      `?level=ad&date_preset=${preset}&time_increment=1` +
-      `&fields=campaign_id,campaign_name,ad_id,ad_name,spend,actions` +
-      `&limit=400&access_token=${encodeURIComponent(token)}`;
+      `?level=ad&date_preset=${preset}&time_increment=1&fields=${fields}` +
+      `&limit=300&access_token=${encodeURIComponent(token)}`;
 
     let rows;
     try { rows = await fetchAll(url); }
@@ -52,24 +65,45 @@ export default async (req) => {
       const cid = row.campaign_id;
       if (row.ad_id) admap[row.ad_id] = { campaignId: cid, campaignName: row.campaign_name };
 
-      let conversas = 0;
-      (row.actions || []).forEach((a) => {
-        if (/messaging_conversation_started/.test(a.action_type)) conversas += Number(a.value) || 0;
-      });
+      const impressions = Number(row.impressions) || 0;
+      const clicks = Number(row.clicks) || 0;
+      const linkClicks = Number(row.inline_link_clicks) || 0;
+      const spend = Number(row.spend) || 0;
 
-      byCamp[cid] = byCamp[cid] || { metaId: acc, campaignId: cid, campaignName: row.campaign_name, _d: {} };
+      const conversas = sumAction(row.actions, /messaging_conversation_started/);
+      const compras = sumAction(row.actions, /^(omni_purchase|purchase|offsite_conversion.fb_pixel_purchase)$/);
+      const valorCompras = sumAction(row.action_values, /^(omni_purchase|purchase|offsite_conversion.fb_pixel_purchase)$/);
+
+      // video: play = quantas vezes comecou; p25 ~ hook; thruplay/p100 ~ hold
+      const vPlay = sumAction(row.video_play_actions, /video_view/);
+      const vP25 = sumAction(row.video_p25_watched_actions, /video_view/);
+      const vP100 = sumAction(row.video_p100_watched_actions, /video_view/);
+      const vThru = sumAction(row.video_thruplay_watched_actions, /video_view/);
+
+      byCamp[cid] = byCamp[cid] || {
+        metaId: acc, campaignId: cid, campaignName: row.campaign_name, _d: {},
+      };
       const d = byCamp[cid]._d;
-      d[row.date_start] = d[row.date_start] || { date: row.date_start, investimento: 0, conversas: 0 };
-      d[row.date_start].investimento += Number(row.spend) || 0;
-      d[row.date_start].conversas += conversas;
+      const dt = row.date_start;
+      d[dt] = d[dt] || {
+        date: dt, investimento: 0, conversas: 0, compras: 0, valorCompras: 0,
+        impressions: 0, clicks: 0, linkClicks: 0,
+        vPlay: 0, vP25: 0, vP100: 0, vThru: 0,
+      };
+      const x = d[dt];
+      x.investimento += spend; x.conversas += conversas;
+      x.compras += compras; x.valorCompras += valorCompras;
+      x.impressions += impressions; x.clicks += clicks; x.linkClicks += linkClicks;
+      x.vPlay += vPlay; x.vP25 += vP25; x.vP100 += vP100; x.vThru += vThru;
     }
     Object.values(byCamp).forEach((c) =>
-      campaigns.push({ metaId: c.metaId, campaignId: c.campaignId, campaignName: c.campaignName, days: Object.values(c._d) })
+      campaigns.push({
+        metaId: c.metaId, campaignId: c.campaignId,
+        campaignName: c.campaignName, days: Object.values(c._d),
+      })
     );
   }
 
-  // grava o mapa ad->campanha (usado p/ atribuir vendas e conversas CTWA)
   await writeArr("admap", Object.entries(admap).map(([adId, m]) => ({ adId, ...m })));
-
   return json({ campaigns, preset });
 };
