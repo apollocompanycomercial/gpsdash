@@ -30,9 +30,28 @@ export default async (req) => {
     return json({ error: "token invalido" }, 401);
   }
 
+  // captura o corpo cru (texto) e o JSON, sem perder nada
+  let bodyText = "";
   let body = {};
-  try { body = await req.json(); } catch { body = {}; }
-  await pushRaw({ source: "ctwa", body });
+  try { bodyText = await req.text(); } catch { bodyText = ""; }
+  try { body = bodyText ? JSON.parse(bodyText) : {}; } catch { body = {}; }
+
+  // DIAGNÓSTICO: registra tudo que chegou, pra inspecionar o que a Data Crazy manda
+  const headersObj = {};
+  try { req.headers.forEach((v, k) => { headersObj[k] = v; }); } catch {}
+  const queryObj = {};
+  url.searchParams.forEach((v, k) => { queryObj[k] = v; });
+  await pushRaw({
+    source: "ctwa",
+    body,
+    _diag: {
+      url: url.href,
+      query: queryObj,
+      bodyText: bodyText.slice(0, 2000),
+      contentType: headersObj["content-type"] || "",
+      method: req.method,
+    },
+  });
 
   const admap = await readArr("admap");
   const list = await readArr("ctwa");
@@ -48,6 +67,50 @@ export default async (req) => {
     else list.unshift(lead);
     results.push({ clid: lead.clid, capi: cap });
   }
+
+  // ---- caminho Data Crazy: dados vêm como parâmetros (query string OU corpo JSON) ----
+  const qp = url.searchParams;
+  // pega o valor procurando primeiro na query, depois no corpo JSON
+  const pega = (k) => {
+    const q = qp.get(k);
+    if (q != null && q !== "") return q;
+    if (body && body[k] != null) return body[k];
+    return "";
+  };
+  const dcPhone = pega("phone");
+  const dcClid  = pega("ctwa_clid");
+  // só registra se veio telefone OU ctwa
+  if (dcPhone || dcClid) {
+    const limpo = (v) => {
+      const s = String(v || "").trim();
+      // ignora variável não-substituída tipo "{{Referral Ctwa Id}}"
+      return /^\{\{.*\}\}$/.test(s) ? "" : s;
+    };
+    const phone = limpo(dcPhone);
+    const clid  = limpo(dcClid);
+    const nome  = limpo(pega("name"));
+    const srcId = limpo(pega("source_id"));
+    const srcUrl= limpo(pega("source_url"));
+    const origem= limpo(pega("origem"));
+    // só conta como lead de anúncio se houver ctwa_clid de verdade
+    if (clid && phone) {
+      const m = admap.find((x) => x.adId === srcId) || {};
+      await registrar({
+        id: "ctwa:" + clid,
+        data: new Date().toISOString().slice(0, 10),
+        phone, nome, clid, adId: srcId,
+        sourceUrl: srcUrl, origem,
+        campaignId: m.campaignId || "",
+        campaignName: m.campaignName || "",
+        evento: "Conversa iniciada (anúncio)",
+        capiLead: false, capiMsg: "",
+      });
+    }
+    if (results.length) await writeArr("ctwa", list.slice(0, 5000));
+    return json({ ok: true, via: "datacrazy", leads: results.length,
+      recebido: { phone: !!phone, clid: !!clid, nome: !!nome } });
+  }
+
 
   // formato oficial WhatsApp Cloud API: entry[].changes[].value.messages[]
   const entries = body.entry || [];
