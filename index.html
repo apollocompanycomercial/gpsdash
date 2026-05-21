@@ -1,0 +1,1158 @@
+<!-- GPS Digital — Painel de Tráfego & Logística — V1 -->
+<div id="root"></div>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');
+
+  :root{
+    --bg:#0a0a0c; --panel:#141417; --panel-2:#1b1b20; --line:rgba(212,175,55,.14);
+    --line-soft:rgba(255,255,255,.06); --gold:#d4af37; --gold-2:#e8c860; --gold-dim:#9a8030;
+    --txt:#f4f1e8; --txt-2:#9b988f; --txt-3:#6a685f;
+    --green:#3fae6b; --green-bg:rgba(63,174,107,.12);
+    --red:#d4574e; --red-bg:rgba(212,87,78,.12);
+    --amber:#d9a23a; --amber-bg:rgba(217,162,58,.12);
+    --blue:#5b8fb0; --blue-bg:rgba(91,143,176,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  #root{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);
+    min-height:100vh;font-size:14px;line-height:1.5;
+    background-image:radial-gradient(900px 500px at 80% -10%,rgba(212,175,55,.07),transparent),
+      radial-gradient(700px 400px at -10% 110%,rgba(212,175,55,.04),transparent);}
+  .app{display:flex;min-height:100vh}
+
+  /* sidebar */
+  .side{width:236px;flex-shrink:0;border-right:1px solid var(--line);
+    padding:22px 14px;display:flex;flex-direction:column;gap:4px;
+    background:linear-gradient(180deg,rgba(20,20,23,.6),transparent);}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 20px;}
+  .brand .logo{width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(135deg,var(--gold),var(--gold-dim));
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#1a1500;font-size:15px;}
+  .brand b{font-size:14px;font-weight:700;letter-spacing:.3px}
+  .brand span{font-size:10px;color:var(--txt-3);letter-spacing:1.5px;text-transform:uppercase;display:block}
+  .nav{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;
+    color:var(--txt-2);cursor:pointer;font-weight:500;font-size:13px;transition:.14s;border:1px solid transparent}
+  .nav:hover{background:var(--panel);color:var(--txt)}
+  .nav.on{background:linear-gradient(90deg,rgba(212,175,55,.16),rgba(212,175,55,.04));
+    color:var(--gold-2);border-color:var(--line)}
+  .nav .ic{width:17px;text-align:center;font-size:14px}
+  .nav .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;
+    font-weight:700;padding:1px 6px;border-radius:20px}
+  .side-foot{margin-top:auto;font-size:10px;color:var(--txt-3);padding:14px 8px 0;border-top:1px solid var(--line-soft)}
+
+  /* main */
+  .main{flex:1;padding:26px 30px;overflow:auto;max-height:100vh}
+  .topbar{display:flex;align-items:center;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+  .topbar h1{font-size:21px;font-weight:700}
+  .topbar .sub{font-size:12px;color:var(--txt-3);margin-top:2px}
+  .spacer{flex:1}
+
+  /* controls */
+  .ctl{background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    color:var(--txt);padding:8px 11px;font-family:inherit;font-size:12.5px;outline:none}
+  .ctl:focus{border-color:var(--gold-dim)}
+  select.ctl{cursor:pointer}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);
+    padding:8px 14px;border-radius:9px;cursor:pointer;font-family:inherit;font-size:12.5px;
+    font-weight:500;transition:.14s;display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{background:var(--panel-2);border-color:var(--gold-dim)}
+  .btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));
+    color:#1a1500;border-color:transparent;font-weight:700}
+  .btn.gold:hover{filter:brightness(1.08)}
+  .btn.sm{padding:5px 10px;font-size:11.5px}
+  .btn.danger{color:var(--red);border-color:rgba(212,87,78,.3)}
+
+  /* kpi grid */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:14px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px 17px;
+    position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,var(--gold),transparent)}
+  .kpi .lbl{font-size:10.5px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+  .kpi .val{font-size:25px;font-weight:700;margin-top:9px;letter-spacing:-.5px;
+    font-variant-numeric:tabular-nums}
+  .kpi .val.gold{color:var(--gold-2)}
+  .kpi .hint{font-size:10.5px;color:var(--txt-3);margin-top:4px}
+  .kpi.hero{grid-column:span 1;background:linear-gradient(135deg,rgba(212,175,55,.13),var(--panel))}
+
+  /* card */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;margin-bottom:18px}
+  .card h2{font-size:14px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:9px}
+  .card .desc{font-size:11.5px;color:var(--txt-3);margin-bottom:14px}
+  .card-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .card-head h2{margin:0}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--txt-3);font-weight:600;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.6px;padding:9px 10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid var(--line-soft);font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:none}
+  tr.row:hover td{background:var(--panel-2)}
+  .num{text-align:right}
+
+  /* pill */
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;
+    font-size:10.5px;font-weight:600;white-space:nowrap}
+  .pill.green{background:var(--green-bg);color:var(--green)}
+  .pill.red{background:var(--red-bg);color:var(--red)}
+  .pill.amber{background:var(--amber-bg);color:var(--amber)}
+  .pill.blue{background:var(--blue-bg);color:var(--blue)}
+  .pill.gold{background:rgba(212,175,55,.12);color:var(--gold-2)}
+  .pill.gray{background:rgba(255,255,255,.06);color:var(--txt-2)}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+  /* kanban */
+  .kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px}
+  .col{flex:1;min-width:230px;background:var(--panel);border:1px solid var(--line);
+    border-radius:13px;padding:12px;display:flex;flex-direction:column}
+  .col.over{border-color:var(--gold);background:rgba(212,175,55,.05)}
+  .col-head{display:flex;align-items:center;gap:8px;margin-bottom:11px;padding:0 3px}
+  .col-head b{font-size:12px;font-weight:700}
+  .col-head .ct{margin-left:auto;font-size:10.5px;color:var(--txt-3);
+    background:var(--panel-2);padding:1px 8px;border-radius:20px;font-weight:600}
+  .col-body{display:flex;flex-direction:column;gap:9px;min-height:60px;flex:1}
+  .kcard{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;
+    padding:11px;cursor:grab;transition:.12s}
+  .kcard:hover{border-color:var(--gold-dim)}
+  .kcard.drag{opacity:.4}
+  .kcard .kname{font-weight:600;font-size:12.5px}
+  .kcard .kmeta{font-size:10.5px;color:var(--txt-3);margin-top:3px;display:flex;
+    gap:8px;flex-wrap:wrap;align-items:center}
+  .kcard .kval{color:var(--gold-2);font-weight:700;font-variant-numeric:tabular-nums}
+  .col-empty{font-size:11px;color:var(--txt-3);text-align:center;padding:18px 0;
+    border:1px dashed var(--line-soft);border-radius:9px}
+
+  /* form */
+  .form{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .form .full{grid-column:span 2}
+  .fld label{display:block;font-size:10.5px;color:var(--txt-3);margin-bottom:5px;
+    text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .fld input,.fld select,.fld textarea{width:100%;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:8px;color:var(--txt);
+    padding:8px 10px;font-family:inherit;font-size:12.5px;outline:none}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--gold-dim)}
+  .fld textarea{resize:vertical;min-height:80px}
+
+  /* modal */
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:50;
+    display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:15px;
+    padding:22px;width:min(540px,100%);max-height:88vh;overflow:auto}
+  .modal h3{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .modal-foot{display:flex;gap:9px;justify-content:flex-end;margin-top:18px}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--txt-3)}
+  .empty .big{font-size:32px;margin-bottom:8px;opacity:.5}
+  .loading{display:flex;align-items:center;justify-content:center;height:100vh;color:var(--txt-3);gap:10px}
+  .spin{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--gold);
+    border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    background:var(--panel);border:1px solid var(--gold-dim);border-radius:10px;
+    padding:11px 18px;font-size:12.5px;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.5);
+    animation:up .25s ease}
+  @keyframes up{from{opacity:0;transform:translate(-50%,12px)}}
+  .split{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+  @media(max-width:880px){.split{grid-template-columns:1fr}.side{width:64px}.brand b,.brand span,.nav span:not(.ic):not(.badge),.side-foot{display:none}.nav{justify-content:center}}
+  .mini-bar{height:6px;border-radius:4px;background:var(--panel-2);overflow:hidden;margin-top:8px}
+  .mini-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-2))}
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px}
+  .seg button{background:none;border:none;color:var(--txt-2);padding:5px 12px;border-radius:6px;
+    cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:600}
+  .seg button.on{background:var(--gold);color:#1a1500}
+  code{background:var(--panel-2);padding:1px 6px;border-radius:5px;font-size:11.5px;color:var(--gold-2)}
+</style>
+
+<script>
+(function(){
+  "use strict";
+  const K = 'gpsdash:state';
+  const fmtBRL = n => (n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const fmtN = n => (n||0).toLocaleString('pt-BR');
+  const uid = () => Math.random().toString(36).slice(2,9);
+  const today = () => new Date().toISOString().slice(0,10);
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  // ---- default state ----
+  const DEFAULT = {
+    accounts:[
+      {id:'a1',nome:'AP CA08',metaId:'1479485729200192',status:'ativa'},
+      {id:'a2',nome:'CA 02',metaId:'1266624275324140',status:'ativa'},
+      {id:'a3',nome:'GGPATROCINIO',metaId:'299760365365671',status:'ativa'}
+    ],
+    trafego:[], sales:[], orders:[], ctwa:[],
+    config:{backendUrl:'',token:''}
+  };
+
+  let S = JSON.parse(JSON.stringify(DEFAULT));
+  let tab = 'dash';
+  let modal = null;
+  let filterAcc = 'all';
+  let filterRange = 30; // dias
+  let drag = null;
+  let syncState = {status:'idle',msg:'',at:null}; // idle|syncing|ok|err
+
+  // ---- storage ----
+  async function load(){
+    try{
+      const r = await window.storage.get(K);
+      if(r && r.value){ S = Object.assign(JSON.parse(JSON.stringify(DEFAULT)), JSON.parse(r.value)); }
+    }catch(e){ /* sem dado salvo ainda */ }
+  }
+  async function save(){
+    try{ await window.storage.set(K, JSON.stringify(S)); }
+    catch(e){ toast('Erro ao salvar — '+e.message); }
+  }
+  function persist(){ save(); render(); }
+
+  // ---- toast ----
+  let toastT;
+  function toast(msg){
+    const old = document.querySelector('.toast'); if(old) old.remove();
+    const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+    document.body.appendChild(t);
+    clearTimeout(toastT); toastT = setTimeout(()=>t.remove(),2600);
+  }
+
+  // ---- date filter ----
+  function inRange(dateStr){
+    if(filterRange==='all') return true;
+    const d = new Date(dateStr), now = new Date();
+    const diff = (now - d)/86400000;
+    return diff <= filterRange && diff >= -1;
+  }
+  function accOk(accId){ return filterAcc==='all' || accId===filterAcc; }
+
+  // ---- KPI compute ----
+  function kpis(){
+    const tf = S.trafego.filter(t=>inRange(t.data)&&accOk(t.accountId));
+    const sl = S.sales.filter(s=>inRange(s.data)&&accOk(s.accountId));
+    const investimento = tf.reduce((a,t)=>a+(+t.investimento||0),0);
+    const conversas = tf.reduce((a,t)=>a+(+t.conversas||0),0);
+    const aprov = sl.filter(s=>s.status==='aprovada');
+    const compras = sl.length;
+    const comprasAprov = aprov.length;
+    const receita = aprov.reduce((a,s)=>a+(+s.valor||0),0);
+    const receitaTotal = sl.reduce((a,s)=>a+(+s.valor||0),0);
+    return {
+      investimento, conversas,
+      custoConversa: conversas? investimento/conversas : 0,
+      compras, comprasAprov, receita, receitaTotal,
+      roas: investimento? receita/investimento : 0,
+      ticket: comprasAprov? receita/comprasAprov : 0,
+      cpa: comprasAprov? investimento/comprasAprov : 0,
+      taxaAprov: compras? (comprasAprov/compras*100) : 0,
+      leadsPorVenda: comprasAprov? conversas/comprasAprov : 0
+    };
+  }
+
+  // ================= RENDER =================
+  function render(){
+    const root = document.getElementById('root');
+    root.innerHTML = `<div class="app">${sidebar()}<div class="main">${view()}</div></div>${modal||''}`;
+    wire();
+  }
+
+  function sidebar(){
+    const items = [
+      ['dash','◆','Dashboard',0],
+      ['contas','▤','Contas de Anúncio',0],
+      ['vendas','＄','Vendas / WebHook',0],
+      ['afterpay','⇄','Kanban After Pay', S.sales.filter(s=>!s.tipo).length],
+      ['pedidos','⊞','Kanban Pedidos', S.orders.filter(o=>o.status==='problema').length],
+      ['ctwa','✆','WhatsApp CTWA', S.ctwa.filter(c=>!c.enviadoMeta).length],
+      ['config','⚙','Configurações',0]
+    ];
+    return `<div class="side">
+      <div class="brand">
+        <div class="logo">G</div>
+        <div><b>GPS Digital</b><span>Tráfego & Logística</span></div>
+      </div>
+      ${items.map(([id,ic,lbl,bd])=>`
+        <div class="nav ${tab===id?'on':''}" data-tab="${id}">
+          <span class="ic">${ic}</span><span>${lbl}</span>
+          ${bd?`<span class="badge">${bd}</span>`:''}
+        </div>`).join('')}
+      <div class="side-foot">V1 · dados locais<br>Painel pronto p/ WebHook</div>
+    </div>`;
+  }
+
+  function rangeBar(){
+    return `<div class="seg" id="rangeSeg">
+      ${[[7,'7d'],[15,'15d'],[30,'30d'],[90,'90d'],['all','Tudo']].map(([v,l])=>
+        `<button data-r="${v}" class="${String(filterRange)===String(v)?'on':''}">${l}</button>`).join('')}
+    </div>
+    <select class="ctl" id="accFilter">
+      <option value="all">Todas as contas</option>
+      ${S.accounts.map(a=>`<option value="${a.id}" ${filterAcc===a.id?'selected':''}>${esc(a.nome)}</option>`).join('')}
+    </select>`;
+  }
+
+  function view(){
+    if(tab==='dash') return viewDash();
+    if(tab==='contas') return viewContas();
+    if(tab==='vendas') return viewVendas();
+    if(tab==='afterpay') return viewAfterpay();
+    if(tab==='pedidos') return viewPedidos();
+    if(tab==='ctwa') return viewCtwa();
+    if(tab==='config') return viewConfig();
+  }
+
+  // ---------- DASHBOARD ----------
+  function viewDash(){
+    const k = kpis();
+    const roasColor = k.roas>=2?'gold':'';
+    return `
+    <div class="topbar">
+      <div><h1>Dashboard</h1><div class="sub">${S.config.backendUrl
+        ?'Sincronizando automaticamente · atualiza a cada 3 min'
+        :'Visão geral de tráfego e conversão'}</div></div>
+      <div class="spacer"></div>
+      ${S.config.backendUrl?`${syncBadge()}<button class="btn" data-act="syncNow">↻ Atualizar agora</button>`:''}
+      ${rangeBar()}
+      ${S.config.backendUrl?'':'<button class="btn" data-act="addTrafego">＋ Lançar tráfego</button>'}
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="lbl">Conversas iniciadas</div>
+        <div class="val">${fmtN(k.conversas)}</div>
+        <div class="hint">leads que entraram no WhatsApp</div></div>
+      <div class="kpi"><div class="lbl">Custo por conversa</div>
+        <div class="val">${fmtBRL(k.custoConversa)}</div>
+        <div class="hint">investimento ÷ conversas</div></div>
+      <div class="kpi"><div class="lbl">Compras</div>
+        <div class="val">${fmtN(k.compras)}</div>
+        <div class="hint">total de pedidos gerados</div></div>
+      <div class="kpi"><div class="lbl">Compras aprovadas</div>
+        <div class="val">${fmtN(k.comprasAprov)}</div>
+        <div class="hint">${k.taxaAprov.toFixed(0)}% de aprovação</div></div>
+      <div class="kpi hero"><div class="lbl">ROAS</div>
+        <div class="val ${roasColor}">${k.roas.toFixed(2)}x</div>
+        <div class="hint">receita aprovada ÷ investimento</div></div>
+      <div class="kpi"><div class="lbl">Ticket aprovado</div>
+        <div class="val gold">${fmtBRL(k.ticket)}</div>
+        <div class="hint">receita aprovada ÷ compras aprov.</div></div>
+      <div class="kpi"><div class="lbl">Investimento</div>
+        <div class="val">${fmtBRL(k.investimento)}</div>
+        <div class="hint">CPA: ${fmtBRL(k.cpa)}</div></div>
+      <div class="kpi"><div class="lbl">Leads por venda</div>
+        <div class="val">${k.leadsPorVenda? k.leadsPorVenda.toFixed(1):'—'}</div>
+        <div class="hint">conversas ÷ vendas aprovadas</div></div>
+      <div class="kpi"><div class="lbl">Receita aprovada</div>
+        <div class="val gold">${fmtBRL(k.receita)}</div>
+        <div class="hint">de ${fmtBRL(k.receitaTotal)} gerados</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>CPA por campanha</h2>
+        <div class="spacer"></div>
+        <span style="font-size:11px;color:var(--txt-3)">atribuição via ctwa_clid / telefone</span></div>
+      ${campaignPerfTable()}
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <div class="card-head"><h2>Desempenho por conta</h2></div>
+        ${accountPerfTable()}
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Funil</h2></div>
+        ${funnelView(k)}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Últimas vendas</h2>
+        <div class="spacer"></div>
+        <button class="btn sm" data-tab="vendas">Ver todas →</button></div>
+      ${salesTable(S.sales.slice().sort((a,b)=>b.data.localeCompare(a.data)).slice(0,8), true)}
+    </div>`;
+  }
+
+  function campaignPerfTable(){
+    const tf = S.trafego.filter(t=>inRange(t.data)&&accOk(t.accountId)&&t.campaignId);
+    const sl = S.sales.filter(s=>inRange(s.data)&&accOk(s.accountId));
+    if(!tf.length) return emptyBox('Sem dados de campanha. Rode "Sincronizar Meta Ads" em Configurações.');
+    const map = {};
+    tf.forEach(t=>{
+      const c = map[t.campaignId] || (map[t.campaignId]={nome:t.campaignName||t.campaignId,
+        inv:0,conv:0,vendas:0,rec:0});
+      c.inv+=+t.investimento||0; c.conv+=+t.conversas||0;
+    });
+    sl.filter(s=>s.status==='aprovada'&&s.campaignId).forEach(s=>{
+      if(map[s.campaignId]){ map[s.campaignId].vendas++; map[s.campaignId].rec+=+s.valor||0; }
+    });
+    const rows = Object.values(map).sort((a,b)=>b.inv-a.inv);
+    return `<table><thead><tr><th>Campanha</th><th class="num">Invest.</th>
+      <th class="num">Conversas</th><th class="num">Vendas</th>
+      <th class="num">CPA</th><th class="num">Custo/conv.</th><th class="num">ROAS</th></tr></thead>
+      <tbody>${rows.map(c=>{
+        const cpa = c.vendas? c.inv/c.vendas : 0;
+        const cc = c.conv? c.inv/c.conv : 0;
+        const roas = c.inv? c.rec/c.inv : 0;
+        return `<tr class="row">
+          <td><b>${esc(c.nome)}</b></td>
+          <td class="num">${fmtBRL(c.inv)}</td>
+          <td class="num">${fmtN(c.conv)}</td>
+          <td class="num">${c.vendas}</td>
+          <td class="num"><b>${c.vendas?fmtBRL(cpa):'—'}</b></td>
+          <td class="num">${fmtBRL(cc)}</td>
+          <td class="num" style="color:${roas>=2?'var(--gold-2)':'var(--txt)'}">${roas.toFixed(2)}x</td>
+        </tr>`;
+      }).join('')}</tbody></table>`;
+  }
+
+  function accountPerfTable(){
+    const rows = S.accounts.map(a=>{
+      const tf = S.trafego.filter(t=>inRange(t.data)&&t.accountId===a.id);
+      const sl = S.sales.filter(s=>inRange(s.data)&&s.accountId===a.id);
+      const inv = tf.reduce((x,t)=>x+(+t.investimento||0),0);
+      const rec = sl.filter(s=>s.status==='aprovada').reduce((x,s)=>x+(+s.valor||0),0);
+      const roas = inv? rec/inv : 0;
+      return {a,inv,rec,roas,vendas:sl.filter(s=>s.status==='aprovada').length};
+    });
+    if(!rows.some(r=>r.inv||r.rec)) return emptyBox('Sem dados no período. Lance o tráfego das contas.');
+    const max = Math.max(...rows.map(r=>r.roas),0.01);
+    return `<table><thead><tr><th>Conta</th><th class="num">Invest.</th>
+      <th class="num">Receita</th><th class="num">Vendas</th><th class="num">ROAS</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr class="row">
+        <td><b>${esc(r.a.nome)}</b><div style="font-size:10px;color:var(--txt-3)">${r.a.metaId}</div></td>
+        <td class="num">${fmtBRL(r.inv)}</td>
+        <td class="num" style="color:var(--gold-2)">${fmtBRL(r.rec)}</td>
+        <td class="num">${r.vendas}</td>
+        <td class="num"><b>${r.roas.toFixed(2)}x</b>
+          <div class="mini-bar"><i style="width:${Math.min(100,r.roas/max*100)}%"></i></div></td>
+      </tr>`).join('')}</tbody></table>`;
+  }
+
+  function funnelView(k){
+    const stages = [
+      ['Conversas iniciadas', k.conversas, '#5b8fb0'],
+      ['Compras geradas', k.compras, '#d9a23a'],
+      ['Compras aprovadas', k.comprasAprov, '#3fae6b']
+    ];
+    const max = Math.max(...stages.map(s=>s[1]),1);
+    return `<div style="display:flex;flex-direction:column;gap:14px">
+      ${stages.map(([lbl,v,c],i)=>{
+        const prev = i>0?stages[i-1][1]:v;
+        const conv = prev? (v/prev*100):100;
+        return `<div>
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px">
+            <span style="color:var(--txt-2)">${lbl}</span>
+            <span><b>${fmtN(v)}</b> ${i>0?`<span style="color:var(--txt-3)">· ${conv.toFixed(0)}%</span>`:''}</span>
+          </div>
+          <div class="mini-bar" style="height:22px">
+            <i style="width:${v/max*100}%;background:${c}"></i></div>
+        </div>`;
+      }).join('')}
+      <div style="border-top:1px solid var(--line-soft);padding-top:12px;font-size:11.5px;color:var(--txt-3)">
+        Custo/conversa <b style="color:var(--txt)">${fmtBRL(k.custoConversa)}</b> ·
+        CPA <b style="color:var(--txt)">${fmtBRL(k.cpa)}</b>
+      </div>
+    </div>`;
+  }
+
+  // ---------- CONTAS ----------
+  function viewContas(){
+    return `
+    <div class="topbar">
+      <div><h1>Contas de Anúncio</h1><div class="sub">Suas contas Meta vinculadas ao painel</div></div>
+      <div class="spacer"></div>
+      <button class="btn gold" data-act="addAccount">＋ Nova conta</button>
+    </div>
+    <div class="card">
+      <div class="desc">No V1 o painel não chama a Meta API direto (CORS + token). Você lança o investimento e as
+      conversas em <b>Lançar tráfego</b> — ou, no V2, o Worker sincroniza automático. As contas abaixo
+      são as referências usadas em todo o painel.</div>
+      ${S.accounts.length? `<table><thead><tr><th>Conta</th><th>ID Meta</th><th>Status</th>
+        <th>Lançamentos</th><th></th></tr></thead><tbody>
+        ${S.accounts.map(a=>`<tr class="row">
+          <td><b>${esc(a.nome)}</b></td>
+          <td><code>${esc(a.metaId)}</code></td>
+          <td><span class="pill ${a.status==='ativa'?'green':'gray'}"><span class="dot"></span>${a.status}</span></td>
+          <td>${S.trafego.filter(t=>t.accountId===a.id).length} de tráfego · ${S.sales.filter(s=>s.accountId===a.id).length} vendas</td>
+          <td class="num"><button class="btn sm danger" data-del-acc="${a.id}">Remover</button></td>
+        </tr>`).join('')}</tbody></table>` : emptyBox('Nenhuma conta cadastrada.')}
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Lançamentos de tráfego</h2>
+        <div class="spacer"></div>
+        <button class="btn sm" data-act="addTrafego">＋ Lançar</button></div>
+      ${S.trafego.length? `<table><thead><tr><th>Data</th><th>Conta</th>
+        <th class="num">Investimento</th><th class="num">Conversas</th><th class="num">Custo/conv.</th><th></th></tr></thead>
+        <tbody>${S.trafego.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(t=>{
+          const acc = S.accounts.find(a=>a.id===t.accountId);
+          const cc = t.conversas? t.investimento/t.conversas:0;
+          return `<tr class="row"><td>${t.data}</td>
+            <td>${esc(acc?acc.nome:'—')}</td>
+            <td class="num">${fmtBRL(+t.investimento)}</td>
+            <td class="num">${fmtN(+t.conversas)}</td>
+            <td class="num">${fmtBRL(cc)}</td>
+            <td class="num"><button class="btn sm danger" data-del-tf="${t.id}">×</button></td></tr>`;
+        }).join('')}</tbody></table>` : emptyBox('Nenhum lançamento de tráfego ainda.')}
+    </div>`;
+  }
+
+  // ---------- VENDAS ----------
+  function viewVendas(){
+    return `
+    <div class="topbar">
+      <div><h1>Vendas / WebHook</h1><div class="sub">Entrada de vendas das plataformas (Payt etc.)</div></div>
+      <div class="spacer"></div>
+      <button class="btn" data-act="importCsv">⇪ Importar CSV</button>
+      <button class="btn gold" data-act="addSale">＋ Nova venda</button>
+    </div>
+    <div class="card">
+      <div class="desc">Vendas alimentam os KPIs, o Kanban After Pay e o Kanban de Pedidos.
+      No V2, o WebHook da Payt cria essas linhas sozinho. Por enquanto: manual ou import de CSV
+      (colunas: <code>data,conta,produto,cliente,valor,status,tipo</code>).</div>
+      ${salesTable(S.sales.slice().sort((a,b)=>b.data.localeCompare(a.data)), false)}
+    </div>`;
+  }
+
+  function salesTable(list, compact){
+    if(!list.length) return emptyBox('Nenhuma venda registrada.');
+    return `<table><thead><tr><th>Data</th><th>Produto / Cliente</th><th>Conta</th>
+      <th class="num">Valor</th><th>Status</th><th>Tipo</th>${compact?'':'<th></th>'}</tr></thead>
+      <tbody>${list.map(s=>{
+        const acc = S.accounts.find(a=>a.id===s.accountId);
+        const st = {aprovada:'green',pendente:'amber',recusada:'red'}[s.status]||'gray';
+        const tp = s.tipo==='afterpay'?'<span class="pill blue">After Pay</span>'
+          : s.tipo==='upfront'?'<span class="pill gold">Antecipado</span>'
+          : '<span class="pill gray">A classificar</span>';
+        return `<tr class="row"><td>${s.data}</td>
+          <td><b>${esc(s.produto)}</b>${s.source==='webhook'?' <span class="pill blue" style="padding:0 6px;font-size:9px">WebHook</span>':''}<div style="font-size:10px;color:var(--txt-3)">${esc(s.cliente||'—')}</div></td>
+          <td>${esc(acc?acc.nome:'—')}</td>
+          <td class="num" style="color:var(--gold-2)">${fmtBRL(+s.valor)}</td>
+          <td><span class="pill ${st}"><span class="dot"></span>${s.status}</span></td>
+          <td>${tp}</td>
+          ${compact?'':`<td class="num"><button class="btn sm danger" data-del-sale="${s.id}">×</button></td>`}
+        </tr>`;
+      }).join('')}</tbody></table>`;
+  }
+
+  // ---------- KANBAN AFTER PAY ----------
+  function viewAfterpay(){
+    const cols = [
+      ['',      'A classificar','gray'],
+      ['upfront','Pagamento antecipado','gold'],
+      ['afterpay','After Pay (contra-entrega)','blue']
+    ];
+    return `
+    <div class="topbar">
+      <div><h1>Kanban — After Pay</h1>
+        <div class="sub">Arraste cada venda para o tipo de pagamento</div></div>
+      <div class="spacer"></div>
+      <button class="btn gold" data-act="addSale">＋ Nova venda</button>
+    </div>
+    <div class="card">
+      <div class="desc">Separe o que é <b>After Pay</b> (contra-entrega / PayAfter) do que foi pago antecipado.
+      Isso muda o tratamento na cobrança e na logística. Mover o card grava o tipo na venda.</div>
+      <div class="kanban">
+        ${cols.map(([key,label,color])=>{
+          const items = S.sales.filter(s=>(s.tipo||'')===key);
+          return `<div class="col" data-drop="tipo:${key}">
+            <div class="col-head"><span class="pill ${color}"><span class="dot"></span></span>
+              <b>${label}</b><span class="ct">${items.length}</span></div>
+            <div class="col-body">
+              ${items.length? items.map(s=>kcardSale(s)).join('')
+                : '<div class="col-empty">Solte vendas aqui</div>'}
+            </div></div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  function kcardSale(s){
+    const acc = S.accounts.find(a=>a.id===s.accountId);
+    const st = {aprovada:'green',pendente:'amber',recusada:'red'}[s.status]||'gray';
+    return `<div class="kcard" draggable="true" data-card="sale:${s.id}">
+      <div class="kname">${esc(s.produto)}</div>
+      <div class="kmeta">
+        <span>${esc(s.cliente||'—')}</span>
+        <span class="kval">${fmtBRL(+s.valor)}</span>
+      </div>
+      <div class="kmeta">
+        <span class="pill ${st}" style="padding:1px 7px">${s.status}</span>
+        <span>${esc(acc?acc.nome:'')}</span><span>${s.data}</span>
+      </div>
+    </div>`;
+  }
+
+  // ---------- KANBAN PEDIDOS ----------
+  function viewPedidos(){
+    const cols = [
+      ['pendente','Pendente','amber'],
+      ['cobranca','Cobrança','red'],
+      ['postado','Postado','gold'],
+      ['transito','Em trânsito','blue'],
+      ['entregue','Entregue','green'],
+      ['problema','Problema','red']
+    ];
+    return `
+    <div class="topbar">
+      <div><h1>Kanban — Pedidos & Cobrança</h1>
+        <div class="sub">Controle de envio · integra com PayLog (V2 via WebHook)</div></div>
+      <div class="spacer"></div>
+      <button class="btn gold" data-act="addOrder">＋ Novo pedido</button>
+    </div>
+    <div class="card">
+      <div class="desc">No V2 o WebHook da PayLog atualiza o status do card sozinho
+      (rastreio, transportadora, entrega). Por enquanto você arrasta manualmente. Cards em
+      <b>Problema</b> aparecem com alerta na barra lateral.</div>
+      <div class="kanban">
+        ${cols.map(([key,label,color])=>{
+          const items = S.orders.filter(o=>(o.status||'pendente')===key);
+          return `<div class="col" data-drop="status:${key}">
+            <div class="col-head"><span class="pill ${color}"><span class="dot"></span></span>
+              <b>${label}</b><span class="ct">${items.length}</span></div>
+            <div class="col-body">
+              ${items.length? items.map(o=>kcardOrder(o)).join('')
+                : '<div class="col-empty">—</div>'}
+            </div></div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  function kcardOrder(o){
+    return `<div class="kcard" draggable="true" data-card="order:${o.id}">
+      <div class="kname">${esc(o.cliente||'Pedido')}</div>
+      <div class="kmeta"><span>${esc(o.produto||'—')}</span>
+        ${o.valor?`<span class="kval">${fmtBRL(+o.valor)}</span>`:''}</div>
+      <div class="kmeta">
+        ${o.transportadora?`<span class="pill gray" style="padding:1px 7px">${esc(o.transportadora)}</span>`:''}
+        ${o.tracking?`<span style="font-size:10px">📦 ${esc(o.tracking)}</span>`:'<span style="font-size:10px;color:var(--txt-3)">sem rastreio</span>'}
+      </div>
+      <div style="text-align:right;margin-top:6px">
+        <button class="btn sm danger" data-del-order="${o.id}" style="padding:2px 7px">×</button>
+      </div>
+    </div>`;
+  }
+
+  // ---------- CTWA ----------
+  function viewCtwa(){
+    const pend = S.ctwa.filter(c=>!c.enviadoMeta).length;
+    return `
+    <div class="topbar">
+      <div><h1>WhatsApp · Tracker CTWA</h1>
+        <div class="sub">Click-to-WhatsApp + ctwa_clid → Pixel / CAPI</div></div>
+      <div class="spacer"></div>
+      <button class="btn gold" data-act="addCtwa">＋ Registrar conversa</button>
+    </div>
+    <div class="card">
+      <div class="desc">Seu número roda em <b>Coexistência</b> — conectado à WhatsApp Cloud API.
+      Toda conversa via anúncio CTWA chega com o objeto <code>referral</code> (<code>ctwa_clid</code> +
+      ID do anúncio) direto do Meta no webhook. O painel grava o lead e dispara o evento
+      <b>Lead na CAPI nativa</b> — sem Make, sem Stape.
+      ${pend?`<b style="color:var(--amber)">${pend} evento(s) não confirmados na CAPI.</b>`:''}</div>
+      ${S.ctwa.length? `<table><thead><tr><th>Data</th><th>Lead</th><th>ctwa_clid</th>
+        <th>Campanha</th><th>Evento</th><th>CAPI</th><th></th></tr></thead><tbody>
+        ${S.ctwa.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(c=>{
+          return `<tr class="row"><td>${c.data}</td>
+            <td><b>${esc(c.nome||'—')}</b>${c.source==='webhook'?' <span class="pill blue" style="padding:0 6px;font-size:9px">auto</span>':''}<div style="font-size:10px;color:var(--txt-3)">${esc(c.phone||c.telefone||'')}</div></td>
+            <td><code style="font-size:10px">${esc((c.clid||'—').slice(0,18))}</code></td>
+            <td style="font-size:11px">${esc(c.campaignName||'—')}</td>
+            <td><span class="pill blue">${esc(c.evento||'Conversa iniciada')}</span></td>
+            <td>${c.enviadoMeta
+              ?'<span class="pill green"><span class="dot"></span>CAPI ok</span>'
+              :'<span class="pill amber"><span class="dot"></span>pendente</span>'}</td>
+            <td class="num">
+              <button class="btn sm" data-toggle-ctwa="${c.id}">${c.enviadoMeta?'Reverter':'Marcar enviado'}</button>
+              <button class="btn sm danger" data-del-ctwa="${c.id}">×</button>
+            </td></tr>`;
+        }).join('')}</tbody></table>`
+        : emptyBox('Nenhuma conversa CTWA ainda. Registre o webhook no app Meta (campo "messages").')}
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Ciclo CTWA — 100% nativo</h2></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px">
+        ${['Anúncio CTWA gera o ctwa_clid + ID do anúncio',
+           'WhatsApp Cloud API envia o referral no webhook',
+           'Painel dispara Lead na CAPI nativa (sem Make)',
+           'Venda na Payt → webhook casa pelo telefone',
+           'Painel dispara Purchase na CAPI com o ctwa_clid',
+           'Meta atribui a venda à campanha → CPA real']
+          .map((s,i)=>`<div style="flex:1;min-width:140px;background:var(--panel-2);border:1px solid var(--line-soft);
+            border-radius:9px;padding:11px">
+            <div style="color:var(--gold-2);font-weight:700;font-size:11px">Passo ${i+1}</div>
+            <div style="margin-top:4px">${s}</div></div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // ---------- CONFIG ----------
+  function viewConfig(){
+    return `
+    <div class="topbar">
+      <div><h1>Configurações</h1><div class="sub">Backend, dados e backup</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Backend de WebHook (Netlify)</h2>
+        <div class="spacer"></div>${syncBadge()}</div>
+      <div class="desc">URL do site Netlify que recebe os WebHooks da Payt e da PayLog.
+      Se o painel estiver hospedado no MESMO site Netlify, deixe a URL <b>vazia</b> (mesmo domínio).
+      O <b>token</b> precisa ser igual ao <code>GPSDASH_SECRET</code> configurado no Netlify.</div>
+      <div class="form" style="max-width:560px">
+        <div class="fld full"><label>URL do backend Netlify</label>
+          <input id="backendUrl" value="${esc(S.config.backendUrl)}"
+            placeholder="https://gpsdash.netlify.app  (ou vazio se mesmo site)"></div>
+        <div class="fld full"><label>Token (GPSDASH_SECRET)</label>
+          <input id="backendToken" value="${esc(S.config.token)}" placeholder="seu-token-secreto"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap">
+        <button class="btn gold" data-act="saveBackend">Salvar conexão</button>
+        <button class="btn" data-act="syncNow">↻ Sincronizar vendas/pedidos</button>
+        <button class="btn" data-act="syncMeta">↻ Sincronizar Meta Ads</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Dados</h2></div>
+      <div class="desc">Tudo é salvo automaticamente no painel. Faça backup periódico.</div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button class="btn" data-act="exportJson">⬇ Exportar backup (JSON)</button>
+        <button class="btn" data-act="importJson">⬆ Importar backup</button>
+        <button class="btn" data-act="seedDemo">✦ Carregar dados de exemplo</button>
+        <button class="btn danger" data-act="wipe">🗑 Zerar tudo</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Endpoints do backend</h2></div>
+      <div class="desc">Configure estas URLs nos painéis da Payt, PayLog e Leona (troque pelo seu domínio):</div>
+      <table><tbody>
+        <tr class="row"><td><b>WebHook Payt</b> (venda)</td>
+          <td><code>SEU-SITE/.netlify/functions/webhook-payt?token=SEU_TOKEN</code></td></tr>
+        <tr class="row"><td><b>WebHook PayLog</b> (envio)</td>
+          <td><code>SEU-SITE/.netlify/functions/webhook-paylog?token=SEU_TOKEN</code></td></tr>
+        <tr class="row"><td><b>WebHook CTWA</b> (WhatsApp Cloud API)</td>
+          <td><code>SEU-SITE/.netlify/functions/webhook-ctwa?token=SEU_TOKEN</code> — registre no app Meta, campo <code>messages</code></td></tr>
+        <tr class="row"><td><b>Sync Meta Ads</b></td>
+          <td><code>SEU-SITE/.netlify/functions/meta-sync?token=SEU_TOKEN</code></td></tr>
+        <tr class="row"><td><b>Debug (payloads crus)</b></td>
+          <td><code>.../data?token=SEU_TOKEN&debug=1</code> — pra ajustar o mapeamento</td></tr>
+      </tbody></table>
+    </div>`;
+  }
+  function syncBadge(){
+    const m={idle:['gray','aguardando'],syncing:['amber','atualizando…'],
+      ok:['green','ao vivo'],err:['red','erro']};
+    const [c,t]=m[syncState.status]||m.idle;
+    const when = syncState.at? ' · '+syncState.at.toLocaleTimeString('pt-BR').slice(0,5):'';
+    return `<span class="pill ${c}"><span class="dot"></span>${t}${when}</span>`;
+  }
+
+  function emptyBox(msg){
+    return `<div class="empty"><div class="big">◇</div>${esc(msg)}</div>`;
+  }
+
+  // ================= MODALS =================
+  function openModal(html){ modal = `<div class="ov" id="ov"><div class="modal">${html}</div></div>`; render(); }
+  function closeModal(){ modal = null; render(); }
+
+  function accSelect(id,sel){
+    return `<select id="${id}">${S.accounts.map(a=>
+      `<option value="${a.id}" ${sel===a.id?'selected':''}>${esc(a.nome)}</option>`).join('')}</select>`;
+  }
+
+  function modalTrafego(){
+    openModal(`<h3>◆ Lançar tráfego</h3>
+      <div class="form">
+        <div class="fld"><label>Data</label><input type="date" id="m_data" value="${today()}"></div>
+        <div class="fld"><label>Conta</label>${accSelect('m_acc')}</div>
+        <div class="fld"><label>Investimento (R$)</label><input id="m_inv" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="fld"><label>Conversas iniciadas</label><input id="m_conv" type="number" placeholder="0"></div>
+      </div>
+      <div class="modal-foot"><button class="btn" data-act="closeModal">Cancelar</button>
+        <button class="btn gold" data-act="saveTrafego">Salvar</button></div>`);
+  }
+  function modalAccount(){
+    openModal(`<h3>▤ Nova conta de anúncio</h3>
+      <div class="form">
+        <div class="fld full"><label>Nome da conta</label><input id="m_nome" placeholder="Ex: AP CA08"></div>
+        <div class="fld full"><label>ID Meta</label><input id="m_mid" placeholder="1479485729200192"></div>
+        <div class="fld full"><label>Status</label><select id="m_st">
+          <option value="ativa">Ativa</option><option value="pausada">Pausada</option></select></div>
+      </div>
+      <div class="modal-foot"><button class="btn" data-act="closeModal">Cancelar</button>
+        <button class="btn gold" data-act="saveAccount">Salvar</button></div>`);
+  }
+  function modalSale(){
+    openModal(`<h3>＄ Nova venda</h3>
+      <div class="form">
+        <div class="fld"><label>Data</label><input type="date" id="m_data" value="${today()}"></div>
+        <div class="fld"><label>Conta</label>${accSelect('m_acc')}</div>
+        <div class="fld"><label>Produto</label><input id="m_prod" placeholder="Hepazol — Protocolo Completo"></div>
+        <div class="fld"><label>Cliente</label><input id="m_cli" placeholder="Nome do cliente"></div>
+        <div class="fld"><label>Valor (R$)</label><input id="m_val" type="number" step="0.01" placeholder="297,00"></div>
+        <div class="fld"><label>Status</label><select id="m_st">
+          <option value="aprovada">Aprovada</option><option value="pendente">Pendente</option>
+          <option value="recusada">Recusada</option></select></div>
+        <div class="fld full"><label>Tipo de pagamento</label><select id="m_tp">
+          <option value="">A classificar</option>
+          <option value="upfront">Pagamento antecipado</option>
+          <option value="afterpay">After Pay (contra-entrega)</option></select></div>
+      </div>
+      <div class="modal-foot"><button class="btn" data-act="closeModal">Cancelar</button>
+        <button class="btn gold" data-act="saveSale">Salvar</button></div>`);
+  }
+  function modalOrder(){
+    openModal(`<h3>⊞ Novo pedido</h3>
+      <div class="form">
+        <div class="fld"><label>Cliente</label><input id="m_cli" placeholder="Nome"></div>
+        <div class="fld"><label>Produto</label><input id="m_prod" placeholder="Protocolo Completo"></div>
+        <div class="fld"><label>Valor (R$)</label><input id="m_val" type="number" step="0.01"></div>
+        <div class="fld"><label>Status</label><select id="m_st">
+          <option value="pendente">Pendente</option><option value="cobranca">Cobrança</option>
+          <option value="postado">Postado</option><option value="transito">Em trânsito</option>
+          <option value="entregue">Entregue</option><option value="problema">Problema</option></select></div>
+        <div class="fld"><label>Transportadora</label><input id="m_tr" placeholder="Correios / PayLog"></div>
+        <div class="fld"><label>Código rastreio</label><input id="m_tk" placeholder="BR..."></div>
+      </div>
+      <div class="modal-foot"><button class="btn" data-act="closeModal">Cancelar</button>
+        <button class="btn gold" data-act="saveOrder">Salvar</button></div>`);
+  }
+  function modalCtwa(){
+    openModal(`<h3>✆ Registrar conversa CTWA</h3>
+      <div class="form">
+        <div class="fld"><label>Data</label><input type="date" id="m_data" value="${today()}"></div>
+        <div class="fld"><label>Conta</label>${accSelect('m_acc')}</div>
+        <div class="fld"><label>Nome do lead</label><input id="m_nome" placeholder="Nome"></div>
+        <div class="fld"><label>Telefone</label><input id="m_tel" placeholder="+55..."></div>
+        <div class="fld full"><label>ctwa_clid</label><input id="m_clid" placeholder="identificador do clique"></div>
+        <div class="fld full"><label>Evento</label><select id="m_ev">
+          <option>Conversa iniciada</option><option>Lead qualificado</option>
+          <option>Checkout iniciado</option><option>Compra</option></select></div>
+      </div>
+      <div class="modal-foot"><button class="btn" data-act="closeModal">Cancelar</button>
+        <button class="btn gold" data-act="saveCtwa">Salvar</button></div>`);
+  }
+  function modalImportCsv(){
+    openModal(`<h3>⇪ Importar vendas via CSV</h3>
+      <div class="desc" style="margin-bottom:12px">Cole o conteúdo do CSV. Primeira linha = cabeçalho.
+      Colunas aceitas: <code>data,conta,produto,cliente,valor,status,tipo</code>.
+      <code>conta</code> casa pelo nome. <code>status</code>: aprovada/pendente/recusada.</div>
+      <div class="fld"><label>Conteúdo CSV</label>
+        <textarea id="m_csv" style="min-height:160px;font-family:monospace"
+        placeholder="data,conta,produto,cliente,valor,status,tipo&#10;2026-05-19,AP CA08,Hepazol Completo,Maria,297,aprovada,upfront"></textarea></div>
+      <div class="modal-foot"><button class="btn" data-act="closeModal">Cancelar</button>
+        <button class="btn gold" data-act="doImportCsv">Importar</button></div>`);
+  }
+  function modalImportJson(){
+    openModal(`<h3>⬆ Importar backup</h3>
+      <div class="desc" style="margin-bottom:12px">Cole o JSON exportado anteriormente. Substitui todos os dados atuais.</div>
+      <div class="fld"><label>JSON</label><textarea id="m_json" style="min-height:160px;font-family:monospace"></textarea></div>
+      <div class="modal-foot"><button class="btn" data-act="closeModal">Cancelar</button>
+        <button class="btn gold" data-act="doImportJson">Importar</button></div>`);
+  }
+
+  // ================= ACTIONS =================
+  const V = id => { const e=document.getElementById(id); return e?e.value.trim():''; };
+
+  function actions(act){
+    switch(act){
+      case 'closeModal': closeModal(); break;
+      case 'addTrafego': modalTrafego(); break;
+      case 'addAccount': modalAccount(); break;
+      case 'addSale': modalSale(); break;
+      case 'addOrder': modalOrder(); break;
+      case 'addCtwa': modalCtwa(); break;
+      case 'importCsv': modalImportCsv(); break;
+      case 'importJson': modalImportJson(); break;
+
+      case 'saveTrafego':
+        S.trafego.push({id:uid(),data:V('m_data'),accountId:V('m_acc'),
+          investimento:+V('m_inv')||0,conversas:+V('m_conv')||0});
+        closeModal(); persist(); toast('Tráfego lançado'); break;
+
+      case 'saveAccount':
+        if(!V('m_nome')){toast('Informe o nome');break;}
+        S.accounts.push({id:uid(),nome:V('m_nome'),metaId:V('m_mid')||'—',status:V('m_st')});
+        closeModal(); persist(); toast('Conta adicionada'); break;
+
+      case 'saveSale':
+        if(!V('m_prod')){toast('Informe o produto');break;}
+        S.sales.push({id:uid(),data:V('m_data'),accountId:V('m_acc'),produto:V('m_prod'),
+          cliente:V('m_cli'),valor:+V('m_val')||0,status:V('m_st'),tipo:V('m_tp')});
+        closeModal(); persist(); toast('Venda registrada'); break;
+
+      case 'saveOrder':
+        if(!V('m_cli')){toast('Informe o cliente');break;}
+        S.orders.push({id:uid(),cliente:V('m_cli'),produto:V('m_prod'),valor:+V('m_val')||0,
+          status:V('m_st'),transportadora:V('m_tr'),tracking:V('m_tk')});
+        closeModal(); persist(); toast('Pedido criado'); break;
+
+      case 'saveCtwa':
+        S.ctwa.push({id:uid(),data:V('m_data'),accountId:V('m_acc'),nome:V('m_nome'),
+          telefone:V('m_tel'),clid:V('m_clid'),evento:V('m_ev'),enviadoMeta:false});
+        closeModal(); persist(); toast('Conversa registrada'); break;
+
+      case 'saveBackend':
+        S.config.backendUrl = V('backendUrl').replace(/\/+$/,'');
+        S.config.token = V('backendToken');
+        save(); toast('Conexão salva'); startPolling(); render(); break;
+      case 'syncNow': syncBackend(false); break;
+      case 'syncMeta': syncMeta('last_30d', false); break;
+
+      case 'doImportCsv': importCsv(); break;
+      case 'doImportJson': importJson(); break;
+      case 'exportJson': exportJson(); break;
+
+      case 'seedDemo': seedDemo(); break;
+      case 'wipe':
+        if(confirm('Zerar TODOS os dados do painel? Não dá pra desfazer.')){
+          S = JSON.parse(JSON.stringify(DEFAULT)); persist(); toast('Painel zerado');
+        } break;
+    }
+  }
+
+  function importCsv(){
+    const raw = V('m_csv'); if(!raw){toast('Cole o CSV');return;}
+    const lines = raw.split(/\r?\n/).filter(l=>l.trim());
+    if(lines.length<2){toast('CSV vazio');return;}
+    const head = lines[0].split(',').map(h=>h.trim().toLowerCase());
+    let n=0;
+    for(let i=1;i<lines.length;i++){
+      const c = lines[i].split(',').map(x=>x.trim());
+      const get = name => { const idx=head.indexOf(name); return idx>=0?(c[idx]||''):''; };
+      const accName = get('conta');
+      let acc = S.accounts.find(a=>a.nome.toLowerCase()===accName.toLowerCase());
+      S.sales.push({id:uid(),
+        data:get('data')||today(),
+        accountId:acc?acc.id:(S.accounts[0]&&S.accounts[0].id),
+        produto:get('produto')||'—',
+        cliente:get('cliente'),
+        valor:parseFloat((get('valor')||'0').replace(',','.'))||0,
+        status:(get('status')||'aprovada').toLowerCase(),
+        tipo:(get('tipo')||'').toLowerCase()});
+      n++;
+    }
+    closeModal(); persist(); toast(n+' venda(s) importada(s)');
+  }
+  function importJson(){
+    try{
+      const obj = JSON.parse(V('m_json'));
+      S = Object.assign(JSON.parse(JSON.stringify(DEFAULT)), obj);
+      closeModal(); persist(); toast('Backup importado');
+    }catch(e){ toast('JSON inválido'); }
+  }
+  function exportJson(){
+    const blob = new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gpsdash-backup-'+today()+'.json';
+    a.click(); toast('Backup baixado');
+  }
+
+  function seedDemo(){
+    const a = S.accounts;
+    const d = n => { const x=new Date(); x.setDate(x.getDate()-n); return x.toISOString().slice(0,10); };
+    S.trafego = [];
+    for(let i=0;i<14;i++){
+      a.forEach(acc=>S.trafego.push({id:uid(),data:d(i),accountId:acc.id,
+        investimento:Math.round(400+Math.random()*900),
+        conversas:Math.round(18+Math.random()*40)}));
+    }
+    const prods=['Hepazol — Protocolo Completo','Hepazol — Protocolo Intensivo','SOS Gastrite Zero'];
+    const nomes=['Maria S.','Conceição R.','Reginaldo P.','Marlene A.','José C.','Antônia L.'];
+    S.sales=[];
+    for(let i=0;i<46;i++){
+      const st = Math.random()<0.72?'aprovada':(Math.random()<0.6?'pendente':'recusada');
+      const tp = Math.random()<0.5?'upfront':(Math.random()<0.6?'afterpay':'');
+      S.sales.push({id:uid(),data:d(Math.floor(Math.random()*14)),
+        accountId:a[Math.floor(Math.random()*a.length)].id,
+        produto:prods[Math.floor(Math.random()*prods.length)],
+        cliente:nomes[Math.floor(Math.random()*nomes.length)],
+        valor:[297,397,697][Math.floor(Math.random()*3)],
+        status:st,tipo:tp});
+    }
+    S.orders=[];
+    const sts=['pendente','cobranca','postado','transito','entregue','problema'];
+    for(let i=0;i<16;i++){
+      S.orders.push({id:uid(),cliente:nomes[Math.floor(Math.random()*nomes.length)],
+        produto:prods[Math.floor(Math.random()*prods.length)],
+        valor:[297,397,697][Math.floor(Math.random()*3)],
+        status:sts[Math.floor(Math.random()*sts.length)],
+        transportadora:Math.random()<0.5?'Correios':'PayLog',
+        tracking:Math.random()<0.6?'BR'+Math.floor(Math.random()*1e9)+'XX':''});
+    }
+    S.ctwa=[];
+    for(let i=0;i<12;i++){
+      S.ctwa.push({id:uid(),data:d(Math.floor(Math.random()*10)),
+        accountId:a[Math.floor(Math.random()*a.length)].id,
+        nome:nomes[Math.floor(Math.random()*nomes.length)],
+        telefone:'+55 (33) 9'+Math.floor(Math.random()*1e8),
+        clid:'ctwa_'+uid()+uid(),evento:'Conversa iniciada',
+        enviadoMeta:Math.random()<0.6});
+    }
+    persist(); toast('Dados de exemplo carregados');
+  }
+
+  // ================= DRAG & DROP =================
+  function applyDrop(cardKey, dropKey){
+    const [ctype,cid] = cardKey.split(':');
+    const [field,value] = dropKey.split(':');
+    if(ctype==='sale'){
+      const s = S.sales.find(x=>x.id===cid);
+      if(s && field==='tipo'){ s.tipo=value; persist(); }
+    } else if(ctype==='order'){
+      const o = S.orders.find(x=>x.id===cid);
+      if(o && field==='status'){ o.status=value; persist(); }
+    }
+  }
+
+  // ================= WIRE EVENTS =================
+  function wire(){
+    document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>{
+      tab=n.dataset.tab; modal=null; render();
+    });
+    document.querySelectorAll('[data-tab]').forEach(b=>{
+      if(b.classList.contains('nav'))return;
+      b.onclick=()=>{tab=b.dataset.tab;render();};
+    });
+    document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>actions(b.dataset.act));
+
+    // range / account filter
+    const seg = document.getElementById('rangeSeg');
+    if(seg) seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      const v=b.dataset.r; filterRange = v==='all'?'all':+v; render();
+    });
+    const af = document.getElementById('accFilter');
+    if(af) af.onchange=()=>{filterAcc=af.value;render();};
+
+    // deletes
+    const del = (sel,arr,word)=>document.querySelectorAll(sel).forEach(b=>{
+      const attr = b.attributes[0].name;
+      b.onclick=()=>{
+        const id=b.getAttribute(attr);
+        S[arr]=S[arr].filter(x=>x.id!==id);
+        persist(); toast(word+' removido');
+      };
+    });
+    del('[data-del-acc]','accounts','Conta');
+    del('[data-del-tf]','trafego','Lançamento');
+    del('[data-del-sale]','sales','Venda');
+    del('[data-del-order]','orders','Pedido');
+    del('[data-del-ctwa]','ctwa','Registro');
+
+    document.querySelectorAll('[data-toggle-ctwa]').forEach(b=>b.onclick=()=>{
+      const c=S.ctwa.find(x=>x.id===b.dataset.toggleCtwa);
+      if(c){c.enviadoMeta=!c.enviadoMeta;persist();
+        toast(c.enviadoMeta?'Marcado como enviado':'Revertido');}
+    });
+
+    // overlay close
+    const ov=document.getElementById('ov');
+    if(ov) ov.onclick=e=>{ if(e.target===ov) closeModal(); };
+
+    // drag & drop
+    document.querySelectorAll('.kcard').forEach(card=>{
+      card.ondragstart=()=>{ drag=card.dataset.card; card.classList.add('drag'); };
+      card.ondragend=()=>{ card.classList.remove('drag'); drag=null; };
+    });
+    document.querySelectorAll('[data-drop]').forEach(col=>{
+      col.ondragover=e=>{ e.preventDefault(); col.classList.add('over'); };
+      col.ondragleave=()=>col.classList.remove('over');
+      col.ondrop=e=>{
+        e.preventDefault(); col.classList.remove('over');
+        if(drag) applyDrop(drag, col.dataset.drop);
+      };
+    });
+  }
+
+  // ================= SYNC COM BACKEND =================
+  function fnUrl(name){
+    let base = (S.config.backendUrl||'').trim().replace(/\/+$/,'');
+    return base + '/.netlify/functions/' + name;
+  }
+  function mergeBackend(d){
+    // preserva o "tipo" classificado manualmente em vendas vindas de webhook
+    const localTipo = {};
+    S.sales.forEach(s=>{ if(s.source==='webhook') localTipo[s.id]=s.tipo; });
+    S.sales = S.sales.filter(s=>s.source!=='webhook')
+      .concat((d.sales||[]).map(s=>({...s,source:'webhook',
+        tipo: s.tipo || localTipo[s.id] || ''})));
+    // pedidos: PayLog é a fonte da verdade do status
+    S.orders = S.orders.filter(o=>o.source!=='webhook')
+      .concat((d.orders||[]).map(o=>({...o,source:'webhook'})));
+    // leads CTWA vindos do webhook (preserva os manuais)
+    S.ctwa = S.ctwa.filter(c=>c.source!=='webhook')
+      .concat((d.ctwa||[]).map(c=>{
+        const acc = S.accounts.find(a=>a.metaId===String(c.metaAccountId||''));
+        return {...c,source:'webhook',accountId:c.accountId||(acc?acc.id:''),
+          enviadoMeta: c.capiLead||c.enviadoMeta||false};
+      }));
+  }
+  async function syncBackend(silent){
+    if(!S.config.backendUrl){ if(!silent) toast('Configure a URL do backend primeiro'); return; }
+    syncState={status:'syncing',msg:'Sincronizando…',at:null};
+    if(!silent) render();
+    try{
+      const r = await fetch(fnUrl('data')+'?token='+encodeURIComponent(S.config.token||''));
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d = await r.json();
+      if(d.error) throw new Error(d.error);
+      mergeBackend(d);
+      syncState={status:'ok',msg:'Sincronizado',at:new Date()};
+      await save(); render();
+      if(!silent) toast('Dados sincronizados do backend');
+    }catch(e){
+      syncState={status:'err',msg:e.message,at:new Date()};
+      render();
+      if(!silent) toast('Falha na sincronização: '+e.message);
+    }
+  }
+  async function syncMeta(preset, silent){
+    if(!S.config.backendUrl){ if(!silent) toast('Configure a URL do backend primeiro'); return; }
+    syncState={status:'syncing',msg:'Sincronizando Meta…',at:null}; if(!silent) render();
+    try{
+      const r = await fetch(fnUrl('meta-sync')+'?token='+encodeURIComponent(S.config.token||'')
+        +'&preset='+(preset||'last_14d'));
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d = await r.json();
+      if(d.error) throw new Error(d.error);
+      // datas que voltaram do Meta — só elas são substituídas
+      const dates = new Set();
+      (d.campaigns||[]).forEach(c=>(c.days||[]).forEach(x=>dates.add(x.date)));
+      S.trafego = S.trafego.filter(t=>t.source!=='meta' || !dates.has(t.data));
+      (d.campaigns||[]).forEach(c=>{
+        const acc = S.accounts.find(a=>a.metaId===String(c.metaId));
+        if(!acc) return;
+        (c.days||[]).forEach(day=>{
+          S.trafego.push({id:uid(),data:day.date,accountId:acc.id,
+            campaignId:c.campaignId,campaignName:c.campaignName,
+            investimento:+day.investimento||0,conversas:+day.conversas||0,source:'meta'});
+        });
+      });
+      syncState={status:'ok',msg:'Meta ao vivo',at:new Date()};
+      await save(); render();
+      if(!silent) toast('Meta Ads sincronizado');
+    }catch(e){
+      syncState={status:'err',msg:e.message,at:new Date()}; render();
+      if(!silent) toast('Falha Meta: '+e.message);
+    }
+  }
+  let pollTimer=null;
+  function startPolling(){
+    if(pollTimer) clearInterval(pollTimer);
+    if(!S.config.backendUrl) return;
+    // near-real-time: a cada 3 min puxa vendas/pedidos/CTWA e o Meta de hoje
+    pollTimer = setInterval(async ()=>{
+      if(document.hidden) return;
+      await syncBackend(true);
+      await syncMeta('today', true);
+    }, 180000);
+  }
+
+  // ================= BOOT =================
+  async function boot(){
+    document.getElementById('root').innerHTML =
+      '<div class="loading"><div class="spin"></div>Carregando painel…</div>';
+    await load();
+    render();
+    if(S.config.backendUrl){
+      await syncBackend(true);
+      syncMeta('today', true);
+      startPolling();
+    }
+  }
+  boot();
+})();
+</script>
