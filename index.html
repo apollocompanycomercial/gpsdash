@@ -221,8 +221,8 @@
       {id:'a1',nome:'AP CA08',metaId:'1479485729200192',status:'ativa'},
       {id:'a2',nome:'Contingência Black',metaId:'993400546343835',status:'ativa'}
     ],
-    trafego:[], sales:[], orders:[], ctwa:[], tasks:[], docs:[], devocionalFeito:{},
-    config:{backendUrl:'',token:'',theme:'dark'}
+    trafego:[], sales:[], orders:[], ctwa:[], tasks:[], docs:[], devocionalFeito:{}, paylog:[],
+    config:{backendUrl:'',token:'',theme:'dark',paylogUrl:''}
   };
 
   let S=JSON.parse(JSON.stringify(DEFAULT));
@@ -382,8 +382,8 @@
       ['dash','🚀','Dashboard',0],
       ['contas','📊','Contas de Anúncio',0],
       ['vendas','💰','Vendas / WebHook',0],
-      ['afterpay','🔄','Kanban After Pay',S.sales.filter(s=>!s.tipo).length],
       ['pedidos','📦','Kanban Pedidos',S.orders.filter(o=>o.status==='problema').length],
+      ['paylog','🚚','PayLog',(S.paylog||[]).filter(p=>p.status==='problema').length],
       ['ctwa','💬','WhatsApp CTWA',S.ctwa.filter(c=>!c.enviadoMeta).length],
       ['tarefas','✅','Tarefas do Dia',(S.tasks||[]).filter(t=>!t.done).length],
       ['criativos','✍️','Criativos / Copy',0],
@@ -428,8 +428,8 @@
   }
 
   function view(){
-    return ({dash:viewDash,contas:viewContas,vendas:viewVendas,afterpay:viewAfterpay,
-      pedidos:viewPedidos,ctwa:viewCtwa,tarefas:viewTarefas,criativos:viewCriativos,
+    return ({dash:viewDash,contas:viewContas,vendas:viewVendas,
+      pedidos:viewPedidos,paylog:viewPaylog,ctwa:viewCtwa,tarefas:viewTarefas,criativos:viewCriativos,
       config:viewConfig}[tab]||viewDash)();
   }
 
@@ -987,7 +987,12 @@
       <tbody>${list.map(s=>{
         const st={aprovada:'green',pendente:'amber',recusada:'red'}[s.status]||'gray';
         const stE={aprovada:'✅',pendente:'⏳',recusada:'❌'}[s.status]||'';
-        const tp=s.tipo==='afterpay'?'<span class="pill blue">🔄 After Pay</span>'
+        const tipoSel=compact?'':`<select data-classif="${s.id}" class="ctl" style="padding:3px 6px;font-size:11px">
+          <option value="" ${!s.tipo?'selected':''}>A classificar</option>
+          <option value="upfront" ${s.tipo==='upfront'?'selected':''}>💳 Antecipado</option>
+          <option value="afterpay" ${s.tipo==='afterpay'?'selected':''}>🔄 After Pay</option>
+        </select>`;
+        const tpBadge=s.tipo==='afterpay'?'<span class="pill blue">🔄 After Pay</span>'
           :s.tipo==='upfront'?'<span class="pill gold">💳 Antecipado</span>'
           :'<span class="pill gray">A classificar</span>';
         const ehMinha=s.origem!=='afiliado'||/jhonny|gabriel ramos|gabriel henrique|apollo/.test(String(s.afiliado||'').toLowerCase());
@@ -1005,7 +1010,7 @@
           <td class="num" style="color:var(--gold-2)">${fmtBRL(+s.valor)}</td>
           <td><span class="pill ${st}"><span class="dot"></span>${stE} ${s.status}</span></td>
           <td>${s.envioStatus?`<span class="pill blue" style="padding:1px 7px">🚚 ${esc(s.envioStatus)}</span>`:'<span style="color:var(--txt-3);font-size:11px">—</span>'}</td>
-          <td>${tp}</td>
+          <td>${compact?tpBadge:tipoSel}</td>
           ${compact?'':`<td class="num"><button class="btn sm" data-sale-detail="${s.id}" style="padding:2px 7px">👤</button>
             <button class="btn sm danger" data-del-sale="${s.id}">×</button></td>`}
         </tr>`;
@@ -1017,37 +1022,74 @@
     if(s.origem!=='afiliado') return true;
     return /jhonny|gabriel ramos|gabriel henrique|apollo/.test(String(s.afiliado||'').toLowerCase());
   }
-  function viewAfterpay(){
-    const cols=[['','📥 A classificar','gray'],['upfront','💳 Pagamento antecipado','gold'],
-      ['afterpay','🔄 After Pay (contra-entrega)','blue']];
-    const filtrar=(arr)=>arr.filter(s=>{
-      if(filtroOrigem==='minhas') return ehMinhaVenda(s);
-      if(filtroOrigem==='afiliados') return !ehMinhaVenda(s);
-      return true;
-    });
-    const segBtn=(v,l)=>`<button data-origem="${v}" class="${filtroOrigem===v?'on':''}">${l}</button>`;
+  // ---------- PAYLOG (painel próprio de logística) ----------
+  function viewPaylog(){
+    const cols=[['pendente','⏳ Pendente','amber'],['postado','📮 Postado','gold'],
+      ['transito','🚚 Em trânsito','blue'],['rota','🛵 Saiu p/ entrega','blue'],
+      ['entregue','✅ Entregue','green'],['problema','⚠️ Problema','red']];
+    const lista=S.paylog||[];
+    const total=lista.length;
+    const ent=lista.filter(p=>p.status==='entregue').length;
+    const tr=lista.filter(p=>p.status==='transito'||p.status==='rota').length;
+    const prob=lista.filter(p=>p.status==='problema').length;
+    const card=(lbl,val,cor)=>`<div class="kpi"><div class="lbl">${lbl}</div>
+      <div class="val ${cor||''}">${val}</div></div>`;
     return `
     <div class="topbar">
-      <div><h1>🔄 Kanban — After Pay</h1>
-        <div class="sub">Arraste cada venda para o tipo de pagamento</div></div>
+      <div><h1>🚚 PayLog — Logística</h1>
+        <div class="sub">Painel próprio de rastreio e entregas · ${total} pedido(s)</div></div>
       <div class="spacer"></div>
-      <div class="seg">${segBtn('todas','Todas')}${segBtn('minhas','🏠 Minhas')}${segBtn('afiliados','🤝 Afiliados')}</div>
-      <button class="btn gold" data-act="addSale">＋ Nova venda</button>
+      <button class="btn" data-act="syncPaylog">↻ Sincronizar PayLog</button>
     </div>
-    <div class="card">
-      <div class="desc">📌 Separe o que é <b>After Pay</b> (contra-entrega) do que foi pago antecipado.
-      Mover o card grava o tipo na venda.</div>
-      ${bulkBar('sales')}
+    <div class="kpis" style="margin-bottom:16px">
+      ${card('📦 Total de pedidos',fmtN(total))}
+      ${card('✅ Entregues',fmtN(ent),'gold')}
+      ${card('🚚 Em rota',fmtN(tr))}
+      ${card('⚠️ Com problema',fmtN(prob))}
+    </div>
+    ${total?`<div class="card">
+      ${bulkBar('paylog')}
       <div class="kanban">
         ${cols.map(([key,label,color])=>{
-          const items=filtrar(S.sales.filter(s=>(s.tipo||'')===key));
-          return `<div class="col" data-drop="tipo:${key}">
+          const items=lista.filter(p=>(p.status||'pendente')===key);
+          return `<div class="col" data-drop="plstatus:${key}">
             <div class="col-head"><span class="pill ${color}"><span class="dot"></span></span>
               <b>${label}</b><span class="ct">${items.length}</span></div>
             <div class="col-body">
-              ${items.length?items.map(s=>kcardSale(s)).join(''):'<div class="col-empty">Solte vendas aqui</div>'}
+              ${items.length?items.map(p=>kcardPaylog(p)).join(''):'<div class="col-empty">—</div>'}
             </div></div>`;
         }).join('')}
+      </div>
+    </div>`:`<div class="card">
+      <div class="empty"><div class="big">🚚</div>
+        Nenhum pedido da PayLog ainda.<br>
+        <span style="font-size:12px;color:var(--txt-3)">Configure a integração da PayLog em Configurações
+        e clique em "Sincronizar PayLog".</span></div>
+    </div>`}`;
+  }
+  function kcardPaylog(p){
+    const trackUrl=p.trackingUrl||(p.tracking?'https://rastreamento.correios.com.br/app/index.php?objetos='+p.tracking:'');
+    const sel=selecionados.has(p.id);
+    return `<div class="kcard ${sel?'sel':''}" draggable="true" data-card="paylog:${p.id}">
+      <div style="display:flex;align-items:flex-start;gap:7px">
+        <input type="checkbox" data-pick="${p.id}" ${sel?'checked':''}
+          style="margin-top:3px;width:15px;height:15px;cursor:pointer">
+        <div style="flex:1">
+          <div class="kname">${esc(p.cliente||'Pedido')}</div>
+          <div class="kmeta"><span>${esc(p.produto||'—')}</span>
+            ${p.valor?`<span class="kval">${fmtBRL(+p.valor)}</span>`:''}</div>
+          ${p.envioStatus?`<div class="kmeta" style="margin-top:3px">
+            <span class="pill blue" style="padding:1px 7px">🚚 ${esc(p.envioStatus)}</span></div>`:''}
+          <div class="kmeta" style="margin-top:3px">
+            ${p.tracking?`<span style="font-size:10px">📦 ${esc(p.tracking)}</span>`
+              :'<span style="font-size:10px;color:var(--txt-3)">sem rastreio</span>'}</div>
+          ${p.telefone?`<div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">📱 ${esc(p.telefone)}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:7px">
+        ${trackUrl?`<a class="btn sm" href="${esc(trackUrl)}" target="_blank"
+          style="flex:1;text-align:center;text-decoration:none;padding:3px">🔗 Rastrear</a>`:''}
+        <button class="btn sm danger" data-del-paylog="${p.id}" style="padding:3px 8px">🗑️</button>
       </div>
     </div>`;
   }
@@ -1510,6 +1552,17 @@
         <button class="btn" data-act="syncNow">↻ Sincronizar vendas/pedidos</button>
         <button class="btn" data-act="syncMeta">↻ Sincronizar Meta Ads</button>
         <button class="btn" data-act="reprocess">🔧 Reprocessar vendas Payt</button>
+        <button class="btn danger" data-act="limparRedRocket">🧹 Limpar vendas Red Rocket</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>🚚 Integração PayLog</h2></div>
+      <div class="desc">Cole aqui o endpoint da PayLog (API ou função que retorna os pedidos em JSON
+      no formato <code>{"pedidos":[...]}</code>). Depois use "Sincronizar PayLog" na aba PayLog.</div>
+      <div class="fld"><label>URL de integração da PayLog</label>
+        <input id="paylogUrl" value="${esc(S.config.paylogUrl||'')}" placeholder="https://..."></div>
+      <div style="margin-top:10px">
+        <button class="btn gold" data-act="savePaylog">💾 Salvar integração PayLog</button>
       </div>
     </div>
     <div class="card">
@@ -1666,6 +1719,33 @@
         S.config.token=V('backendToken');
         save();toast('💾 Conexão salva');startPolling();render();break;
       case 'syncNow':syncBackend(false);break;
+      case 'savePaylog':
+        S.config.paylogUrl=(V('paylogUrl')||'').trim();
+        save();toast('💾 Integração PayLog salva');break;
+      case 'limparRedRocket':{
+        // pega qualquer venda que seja Red Rocket (vários formatos de id possíveis)
+        const ehRR=(x)=>/^(redrocket:|rr_|rr:)/.test(String(x.id))||x.fonte==='redrocket';
+        const rr=S.sales.filter(ehRR).length;
+        if(!rr){toast('Nenhuma venda Red Rocket encontrada');break;}
+        if(!confirm('Apagar '+rr+' venda(s) da Red Rocket? As da Payt não são afetadas.'))break;
+        S.sales=S.sales.filter(s=>!ehRR(s));
+        S.orders=S.orders.filter(o=>!ehRR(o));
+        persist();toast('🧹 '+rr+' venda(s) Red Rocket removida(s)');
+        break;
+      }
+      case 'syncPaylog':
+        if(!S.config.paylogUrl){
+          toast('Configure a integração da PayLog em Configurações primeiro');
+          tab='config';render();
+        }else{
+          toast('🚚 Sincronizando PayLog…');
+          fetch(S.config.paylogUrl).then(r=>r.json()).then(d=>{
+            if(Array.isArray(d.pedidos)){S.paylog=d.pedidos;persist();
+              toast('✅ '+d.pedidos.length+' pedido(s) PayLog');}
+            else toast('PayLog: resposta inesperada');
+          }).catch(e=>toast('Falha PayLog: '+e.message));
+        }
+        break;
       case 'reprocess':{
         if(!S.config.backendUrl){toast('Configure a conexão primeiro');break;}
         toast('🔧 Reprocessando vendas…');
@@ -1892,6 +1972,9 @@
     }else if(ctype==='order'){
       const o=S.orders.find(x=>x.id===cid);
       if(o&&field==='status'){o.status=value;persist();toast('Pedido movido');}
+    }else if(ctype==='paylog'){
+      const p=(S.paylog||[]).find(x=>x.id===cid);
+      if(p&&field==='plstatus'){p.status=value;persist();toast('Pedido PayLog movido');}
     }
   }
 
@@ -1940,6 +2023,20 @@
     del('[data-del-order]','orders','Pedido');
     del('[data-del-ctwa]','ctwa','Registro');
     del('[data-del-task]','tasks','Tarefa');
+    // classificar venda (antecipado/after pay) pelo seletor na tabela
+    document.querySelectorAll('[data-classif]').forEach(sel=>sel.onchange=()=>{
+      const s=S.sales.find(x=>x.id===sel.dataset.classif);
+      if(s){s.tipo=sel.value;persist();toast('Venda classificada');}
+    });
+    // sincronizar PayLog
+    document.querySelectorAll('[data-act="syncPaylog"]').forEach(b=>{});
+    // excluir pedido PayLog
+    document.querySelectorAll('[data-del-paylog]').forEach(b=>b.onclick=()=>{
+      const idv=b.dataset.delPaylog;
+      if(!confirm('Excluir este pedido da PayLog?'))return;
+      S.paylog=(S.paylog||[]).filter(x=>x.id!==idv);
+      persist();toast('Pedido removido');
+    });
     document.querySelectorAll('[data-origem]').forEach(b=>b.onclick=()=>{
       filtroOrigem=b.dataset.origem;render();
     });
@@ -1962,6 +2059,7 @@
       const ids=selecionados;
       S.sales=S.sales.filter(x=>!ids.has(x.id));
       S.orders=S.orders.filter(x=>!ids.has(x.id));
+      S.paylog=(S.paylog||[]).filter(x=>!ids.has(x.id));
       selecionados=new Set();
       persist();toast('🗑️ '+n+' item(ns) excluído(s)');
     });
