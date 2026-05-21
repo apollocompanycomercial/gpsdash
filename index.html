@@ -322,20 +322,24 @@
     const receitaPayt=aprov.reduce((x,s)=>x+(+s.valor||0),0);
     const receitaTotal=sl.reduce((x,s)=>x+(+s.valor||0),0);
     const comprasAprovPayt=aprov.length;
-    // fonte: se já tem venda na Payt usa ela; senão usa o que o Meta reporta
-    const temPayt = sl.length>0;
-    const compras = temPayt? sl.length : a.comprasMeta;
-    const comprasAprov = temPayt? comprasAprovPayt : a.comprasMeta;
+    // as duas fontes coexistem — Payt (real) e Meta (reportado). Nunca uma esconde a outra.
+    const temPayt = aprov.length>0;
+    // ROAS/CPA/ticket: usa Payt se houver venda aprovada; senão o reportado pela Meta
     const receita = temPayt? receitaPayt : a.valorComprasMeta;
+    const comprasAprov = temPayt? comprasAprovPayt : a.comprasMeta;
     return {
       ...a,
       fontePayt:temPayt,
-      comprasPlataforma:compras, comprasAprov,
-      receita, receitaTotal: temPayt? receitaTotal : a.valorComprasMeta,
+      // contagens das DUAS fontes, sempre disponíveis
+      comprasMeta:a.comprasMeta, valorComprasMeta:a.valorComprasMeta,
+      comprasPayt:sl.length, comprasAprovPayt,
+      comprasPlataforma:temPayt? sl.length : a.comprasMeta,
+      comprasAprov,
+      receita, receitaPayt, receitaTotal,
       roas: a.investimento? receita/a.investimento:0,
       ticket: comprasAprov? receita/comprasAprov:0,
       cpa: comprasAprov? a.investimento/comprasAprov:0,
-      taxaAprov: temPayt&&sl.length? comprasAprovPayt/sl.length*100:100,
+      taxaAprov: sl.length? comprasAprovPayt/sl.length*100:100,
       leadsPorVenda: comprasAprov? a.conversas/comprasAprov:0
     };
   }
@@ -676,14 +680,15 @@
         <div class="val">${fmtN(k.conversas)}</div><div class="hint">leads no WhatsApp</div></div>
       <div class="kpi"><div class="lbl">💵 Custo por conversa</div>
         <div class="val">${fmtBRL(k.custoConversa)}</div><div class="hint">investimento ÷ conversas</div></div>
-      <div class="kpi"><div class="lbl">🛒 Compras ${k.fontePayt?'(Payt)':'(Meta)'}</div>
-        <div class="val">${fmtN(k.comprasPlataforma)}</div>
-        <div class="hint">${k.fontePayt?fmtN(k.comprasMeta)+' reportadas pela Meta':'fonte: Meta (Payt ainda não conectada)'}</div></div>
-      <div class="kpi"><div class="lbl">✅ Compras aprovadas</div>
-        <div class="val">${fmtN(k.comprasAprov)}</div><div class="hint">${k.fontePayt?k.taxaAprov.toFixed(0)+'% de aprovação':'pendente da Payt'}</div></div>
+      <div class="kpi"><div class="lbl">🛒 Compras Meta</div>
+        <div class="val">${fmtN(k.comprasMeta)}</div>
+        <div class="hint">reportadas pelo Meta</div></div>
+      <div class="kpi"><div class="lbl">✅ Vendas Payt</div>
+        <div class="val">${fmtN(k.comprasAprovPayt)}</div>
+        <div class="hint">${k.comprasPayt?k.comprasAprovPayt+' aprov. de '+k.comprasPayt:'aguardando webhook'}</div></div>
       <div class="kpi hero"><div class="lbl">📈 ROAS</div>
         <div class="val ${k.roas>=2?'gold':''}">${k.roas.toFixed(2)}x</div>
-        <div class="hint">receita ÷ investimento${k.fontePayt?'':' (Meta)'}</div></div>
+        <div class="hint">${k.fontePayt?'receita Payt':'receita Meta'} ÷ investimento</div></div>
       <div class="kpi"><div class="lbl">🎯 CPA geral</div>
         <div class="val">${fmtBRL(k.cpa)}</div><div class="hint">investimento ÷ vendas</div></div>
       <div class="kpi"><div class="lbl">🧾 Ticket médio</div>
@@ -693,9 +698,9 @@
       <div class="kpi"><div class="lbl">🔢 Leads por venda</div>
         <div class="val">${k.leadsPorVenda?k.leadsPorVenda.toFixed(1):'—'}</div>
         <div class="hint">conversas ÷ vendas</div></div>
-      <div class="kpi"><div class="lbl">💎 Receita ${k.fontePayt?'aprovada':'(Meta)'}</div>
+      <div class="kpi"><div class="lbl">💎 Receita</div>
         <div class="val gold">${fmtBRL(k.receita)}</div>
-        <div class="hint">${k.fontePayt?'de '+fmtBRL(k.receitaTotal)+' gerados':'valor reportado pela Meta'}</div></div>
+        <div class="hint">${k.fontePayt?'Payt · Meta reporta '+fmtBRL(k.valorComprasMeta):'reportado pelo Meta'}</div></div>
     </div>
 
     <div class="card">
@@ -1245,6 +1250,7 @@
         <button class="btn gold" data-act="saveBackend">💾 Salvar conexão</button>
         <button class="btn" data-act="syncNow">↻ Sincronizar vendas/pedidos</button>
         <button class="btn" data-act="syncMeta">↻ Sincronizar Meta Ads</button>
+        <button class="btn" data-act="reprocess">🔧 Reprocessar vendas Payt</button>
       </div>
     </div>
     <div class="card">
@@ -1401,6 +1407,17 @@
         S.config.token=V('backendToken');
         save();toast('💾 Conexão salva');startPolling();render();break;
       case 'syncNow':syncBackend(false);break;
+      case 'reprocess':{
+        if(!S.config.backendUrl){toast('Configure a conexão primeiro');break;}
+        toast('🔧 Reprocessando vendas…');
+        fetch(fnUrl('reprocess')+'?token='+encodeURIComponent(S.config.token||''))
+          .then(r=>r.json()).then(d=>{
+            if(d.error){toast('Erro: '+d.error);return;}
+            toast('✅ '+(d.novas||0)+' novas, '+(d.atualizadas||0)+' atualizadas');
+            syncBackend(false);
+          }).catch(e=>toast('Falha: '+e.message));
+        break;
+      }
       case 'syncMeta':
         syncMeta('last_30d',false).then(()=>syncMeta('today',true));
         break;
@@ -1605,14 +1622,17 @@
 
   // ================= DRAG & DROP =================
   function applyDrop(cardKey,dropKey){
-    const [ctype,cid]=cardKey.split(':');
-    const [field,value]=dropKey.split(':');
+    // separa só no 1º ":" — IDs como "payt:120246" têm dois-pontos dentro
+    const ci=cardKey.indexOf(':');
+    const ctype=cardKey.slice(0,ci), cid=cardKey.slice(ci+1);
+    const di=dropKey.indexOf(':');
+    const field=dropKey.slice(0,di), value=dropKey.slice(di+1);
     if(ctype==='sale'){
       const s=S.sales.find(x=>x.id===cid);
-      if(s&&field==='tipo'){s.tipo=value;persist();}
+      if(s&&field==='tipo'){s.tipo=value;persist();toast('Venda movida');}
     }else if(ctype==='order'){
       const o=S.orders.find(x=>x.id===cid);
-      if(o&&field==='status'){o.status=value;persist();}
+      if(o&&field==='status'){o.status=value;persist();toast('Pedido movido');}
     }
   }
 
@@ -1637,10 +1657,17 @@
     });
     const af=document.getElementById('accFilter');
     if(af)af.onchange=()=>{filterAcc=af.value;render();};
-    const del=(sel,arr,word)=>document.querySelectorAll(sel).forEach(b=>{
-      const attr=b.attributes[0].name;
-      b.onclick=()=>{S[arr]=S[arr].filter(x=>x.id!==b.getAttribute(attr));persist();toast(word+' removido');};
-    });
+    const del=(sel,arr,word)=>{
+      // extrai o nome do atributo do seletor, ex: '[data-del-sale]' -> 'data-del-sale'
+      const attr=sel.replace(/[\[\]]/g,'');
+      document.querySelectorAll(sel).forEach(b=>{
+        b.onclick=()=>{
+          const idv=b.getAttribute(attr);
+          S[arr]=S[arr].filter(x=>x.id!==idv);
+          persist();toast(word+' removido');
+        };
+      });
+    };
     del('[data-del-sale]','sales','Venda');
     del('[data-del-order]','orders','Pedido');
     del('[data-del-ctwa]','ctwa','Registro');
