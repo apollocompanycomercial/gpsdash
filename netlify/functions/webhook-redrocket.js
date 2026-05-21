@@ -1,13 +1,31 @@
-// webhook-redrocket.js — recebe a venda da Red Rocket (mesma logica da Payt)
+// webhook-redrocket.js — recebe a venda da Red Rocket, mapeia o formato real e dispara CAPI
 //   /.netlify/functions/webhook-redrocket?token=SEU_TOKEN
-import { readArr, writeArr, pushRaw, checkToken, json, pick } from "./_store.js";
+import { readArr, writeArr, pushRaw, checkToken, json } from "./_store.js";
 import { sendCapi, normPhone } from "./_capi.js";
 
 function mapStatus(s) {
   s = String(s || "").toLowerCase();
-  if (/paid|approv|complet|captured|confirm/.test(s)) return "aprovada";
-  if (/pend|waiting|process|analy|created|authorized/.test(s)) return "pendente";
+  if (/paid|approv|complet|captured|confirm|pago/.test(s)) return "aprovada";
+  if (/pend|waiting|process|analy|created|authorized|aguard/.test(s)) return "pendente";
   return "recusada";
+}
+function mapEnvio(s) {
+  const k = String(s || "").toLowerCase();
+  const mapa = {
+    "waiting_code": "Aguardando código de rastreio", "posted": "Postado nos Correios",
+    "shipping": "Em trânsito", "in_transit": "Em trânsito",
+    "out_for_delivery": "Saiu para entrega", "delivered": "Entregue",
+    "returned": "Devolvido", "lost": "Extraviado", "problem": "Problema na entrega",
+  };
+  return mapa[k] || (s ? String(s) : "");
+}
+function envioParaColuna(s) {
+  const k = String(s || "").toLowerCase();
+  if (/deliver|entreg/.test(k)) return "entregue";
+  if (/transit|shipping|out_for/.test(k)) return "transito";
+  if (/posted|postad/.test(k)) return "postado";
+  if (/return|lost|problem/.test(k)) return "problema";
+  return "pendente";
 }
 
 export default async (req) => {
@@ -18,36 +36,80 @@ export default async (req) => {
   try { body = await req.json(); } catch { body = {}; }
   await pushRaw({ source: "redrocket", body });
 
-  const o = body.order || body.data || body.transaction || body.sale || body;
+  // ---- estrutura real do payload Red Rocket ----
+  const customer = body.customer || {};
+  const product  = body.product || {};
+  const payment  = body.payment || {};
+  const shipping = body.shipping || {};
+  const plan     = body.plan || {};
+  const affiliate= body.affiliate || null;
 
-  const extId = String(
-    pick(o, ["id", "order_id", "code", "reference", "transaction_id", "hash"]) || ("rr_" + Date.now())
-  );
+  const extId = String(body.id || body.pagarme_order_id || payment.transaction_id || ("rr_" + Date.now()));
   const id = "redrocket:" + extId;
 
-  const divisor = Number(process.env.PAYT_AMOUNT_DIVISOR || 100);
-  let valor = Number(pick(o, ["amount", "total", "value", "paid_amount", "price", "total_amount", "net_amount"])) || 0;
-  if (divisor > 1) valor = valor / divisor;
+  // valor: Red Rocket manda em REAIS (ex: "697.00") — NÃO dividir
+  const valor = Number(body.amount || body.totalToSend || body.subtotal || product.price && product.price.value || 0) || 0;
 
-  const telefone = pick(o, ["customer.phone", "client.phone", "buyer.phone", "phone"]) || "";
-  const email = pick(o, ["customer.email", "client.email", "buyer.email", "email"]) || "";
+  const telefone = customer.phone || "";
+  const email    = customer.email && customer.email !== "null" ? customer.email : "";
+  const statusRaw = payment.status_label || payment.status_code || body.status || "";
+
+  // endereço
+  const ad = customer.address || {};
+  const enderecoLinha = [
+    ad.street, ad.number, ad.complement, ad.neighborhood,
+    ad.city, ad.state, ad.zipCode
+  ].filter(Boolean).join(", ");
+
+  // afiliado: se existe body.affiliate, foi venda de afiliado
+  const ATENDENTES = ["jhonny", "gabriel ramos", "gabriel henrique"];
+  const afilNome = affiliate ? (affiliate.name || "Afiliado") : "";
+  const ehAtendente = ATENDENTES.some((a) => afilNome.toLowerCase().includes(a));
+  const origem = (affiliate && !ehAtendente) ? "afiliado" : "propria";
+
+  // potes: Red Rocket informa items_per_plan; senão tenta extrair do nome
+  let potes = Number(plan.items_per_plan || 0);
+  if (!potes) {
+    const m = String(product.name || "").match(/(\d+)\s*(unidad|frasc|pote|leve)/i);
+    potes = m ? Number(m[1]) : 1;
+  }
+
+  const dataRaw = body.created_at || body.date || new Date().toISOString();
 
   const sale = {
     id,
-    data: String(pick(o, ["paid_at", "created_at", "createdAt", "date", "order_date"]) || new Date().toISOString()).slice(0, 10),
-    produto: pick(o, ["product.name", "products.0.name", "items.0.name", "plan.name", "product_name", "offer.name"]) || "Produto",
-    cliente: pick(o, ["customer.name", "client.name", "buyer.name", "customer.full_name", "name"]) || "",
+    data: String(dataRaw).slice(0, 10),
+    produto: product.name || plan.name || "Produto",
+    cliente: customer.name || "",
     telefone,
+    email,
+    doc: customer.document || "",
+    endereco: enderecoLinha,
+    enderecoObj: {
+      rua: ad.street||"", numero: ad.number||"", complemento: ad.complement||"",
+      bairro: ad.neighborhood||"", cidade: ad.city||"", uf: ad.state||"", cep: ad.zipCode||""
+    },
+    tracking: shipping.cod_rastreio || "",
+    trackingUrl: shipping.link_rastreio || "",
+    envioStatus: mapEnvio(shipping.rastreio_servico),
+    envioStatusRaw: shipping.rastreio_servico || "",
+    origem,
+    afiliado: afilNome,
+    afiliadoEmail: affiliate ? (affiliate.email || "") : "",
+    quemVendeu: origem === "afiliado" ? afilNome : (afilNome || "Apollo"),
+    potes,
+    anotacoes: "",
     valor,
-    status: mapStatus(pick(o, ["status", "payment_status", "order_status", "situation"])),
-    tipo: "",            // fica vazio de proposito -> voce classifica no Kanban After Pay
+    status: mapStatus(statusRaw),
+    tipo: "",
     accountId: "",
     campaignId: "",
     campaignName: "",
     clid: "",
+    source: "webhook",
   };
 
-  // ATRIBUICAO: casa a venda com a conversa CTWA pelo telefone -> campanha + ctwa_clid
+  // atribuição via telefone -> conversa CTWA
   const ph = normPhone(telefone);
   if (ph) {
     const ctwa = await readArr("ctwa");
@@ -59,30 +121,38 @@ export default async (req) => {
     }
   }
 
-  // upsert da venda
   const sales = await readArr("sales");
   const si = sales.findIndex((s) => s.id === id);
-  if (si >= 0) sales[si] = { ...sales[si], ...sale };
+  if (si >= 0) sales[si] = { ...sales[si], ...sale, anotacoes: sales[si].anotacoes || "", tipo: sales[si].tipo || "" };
   else sales.unshift(sale);
   await writeArr("sales", sales.slice(0, 3000));
 
   let capi = { skipped: "venda nao aprovada" };
   if (sale.status === "aprovada") {
-    // pedido logistico
     const orders = await readArr("orders");
-    if (!orders.find((x) => x.id === id)) {
-      orders.unshift({
-        id, ref: extId, cliente: sale.cliente, produto: sale.produto,
-        valor: sale.valor, status: "pendente", transportadora: "", tracking: "",
-      });
-      await writeArr("orders", orders.slice(0, 3000));
+    const oi = orders.findIndex((x) => x.id === id);
+    let trackUrl = sale.trackingUrl || "";
+    if (!trackUrl && sale.tracking) {
+      trackUrl = "https://rastreamento.correios.com.br/app/index.php?objetos=" + sale.tracking;
     }
-    // CAPI Purchase nativo (com ctwa_clid p/ atribuir ao anuncio)
+    const ord = {
+      id, ref: extId, cliente: sale.cliente, produto: sale.produto, valor: sale.valor,
+      telefone: sale.telefone, endereco: sale.endereco,
+      status: envioParaColuna(sale.envioStatusRaw),
+      envioStatus: sale.envioStatus || "Aguardando",
+      transportadora: "", tracking: sale.tracking || "", trackingUrl: trackUrl,
+      anotacoes: (oi >= 0 ? orders[oi].anotacoes : "") || "",
+    };
+    if (oi >= 0) orders[oi] = { ...orders[oi], ...ord };
+    else orders.unshift(ord);
+    await writeArr("orders", orders.slice(0, 3000));
+
     capi = await sendCapi("Purchase", {
       phone: telefone, email, clid: sale.clid,
       value: sale.valor, currency: "BRL", eventId: id,
     });
   }
 
-  return json({ ok: true, id, status: sale.status, campanha: sale.campaignName || null, capi });
+  return json({ ok: true, id, produto: sale.produto, valor: sale.valor,
+    status: sale.status, origem: sale.origem, afiliado: sale.afiliado, capi });
 };

@@ -117,18 +117,94 @@ export default async (req) => {
     byId[id] = sale;
   }
 
+  // ---- processa as vendas Red Rocket ----
+  const rrRaws = raw.filter((r) => r.source === "redrocket" && r.body);
+  for (const r of rrRaws) {
+    const body = r.body;
+    const customer = body.customer || {};
+    const product  = body.product || {};
+    const payment  = body.payment || {};
+    const shipping = body.shipping || {};
+    const plan     = body.plan || {};
+    const affiliate= body.affiliate || null;
+
+    const extId = String(body.id || body.pagarme_order_id || payment.transaction_id || "");
+    if (!extId) continue;
+    const id = "redrocket:" + extId;
+
+    const valor = Number(body.amount || body.totalToSend || body.subtotal || 0) || 0;
+    const ad = customer.address || {};
+    const enderecoLinha = [
+      ad.street, ad.number, ad.complement, ad.neighborhood,
+      ad.city, ad.state, ad.zipCode
+    ].filter(Boolean).join(", ");
+
+    const ATEND = ["jhonny", "gabriel ramos", "gabriel henrique"];
+    const afilNome = affiliate ? (affiliate.name || "Afiliado") : "";
+    const ehAtend = ATEND.some((a) => afilNome.toLowerCase().includes(a));
+    const origem = (affiliate && !ehAtend) ? "afiliado" : "propria";
+
+    let potes = Number(plan.items_per_plan || 0);
+    if (!potes) {
+      const m = String(product.name || "").match(/(\d+)\s*(unidad|frasc|pote|leve)/i);
+      potes = m ? Number(m[1]) : 1;
+    }
+
+    const sale = {
+      id,
+      data: String(body.created_at || body.date || new Date().toISOString()).slice(0, 10),
+      produto: product.name || plan.name || "Produto",
+      cliente: customer.name || "",
+      telefone: customer.phone || "",
+      email: customer.email && customer.email !== "null" ? customer.email : "",
+      doc: customer.document || "",
+      endereco: enderecoLinha,
+      enderecoObj: {
+        rua: ad.street||"", numero: ad.number||"", complemento: ad.complement||"",
+        bairro: ad.neighborhood||"", cidade: ad.city||"", uf: ad.state||"", cep: ad.zipCode||""
+      },
+      tracking: shipping.cod_rastreio || "",
+      trackingUrl: shipping.link_rastreio || "",
+      envioStatus: mapEnvio(shipping.rastreio_servico),
+      envioStatusRaw: shipping.rastreio_servico || "",
+      origem,
+      afiliado: afilNome,
+      afiliadoEmail: affiliate ? (affiliate.email || "") : "",
+      quemVendeu: origem === "afiliado" ? afilNome : (afilNome || "Apollo"),
+      potes,
+      anotacoes: "",
+      valor,
+      status: mapStatus(payment.status_label || payment.status_code || body.status || ""),
+      tipo: "", accountId: "", campaignId: "", campaignName: "", clid: "",
+      source: "webhook",
+    };
+
+    const ph = normPhone(sale.telefone);
+    if (ph) {
+      const lead = ctwa.find((c) => normPhone(c.phone) === ph);
+      if (lead) {
+        sale.campaignId = lead.campaignId || "";
+        sale.campaignName = lead.campaignName || "";
+        sale.clid = lead.clid || "";
+      }
+    }
+    byId[id] = sale;
+  }
+
   const sales = await readArr("sales");
+  // IDs gerados por webhook (payt: ou redrocket:)
+  const ehWebhook = (idv) => /^(payt:|redrocket:)/.test(String(idv));
   // preserva o que o usuário editou/anotou manualmente
   const editadas = {};
   sales.forEach((s) => {
-    if (String(s.id).startsWith("payt:") && (s.tipo || s.editado || s.anotacoes)) editadas[s.id] = s;
+    if (ehWebhook(s.id) && (s.tipo || s.editado || s.anotacoes)) editadas[s.id] = s;
   });
 
-  // mantém vendas que NÃO são Payt (Red Rocket, manuais)
-  const naoPayt = sales.filter((s) => !String(s.id).startsWith("payt:"));
+  // mantém vendas manuais (que não vieram de webhook)
+  const naoWebhook = sales.filter((s) => !ehWebhook(s.id));
 
-  // reconstrói as Payt — uma por ID, aplicando edições manuais por cima
-  const paytFinais = Object.values(byId).map((s) => {
+  // reconstrói as de webhook — uma por ID, aplicando edições manuais por cima
+  const webhookFinais = Object.values(byId).map((s) => {
     const ed = editadas[s.id];
     if (!ed) return s;
     return { ...s,
@@ -141,14 +217,13 @@ export default async (req) => {
       endereco: ed.editado ? ed.endereco : s.endereco };
   });
 
-  const novasSales = [...paytFinais, ...naoPayt];
+  const novasSales = [...webhookFinais, ...naoWebhook];
 
-  // pedidos: reconstrói os Payt aprovados
+  // pedidos: reconstrói os aprovados (Payt + Red Rocket)
   const orders = await readArr("orders");
-  const naoPaytOrders = orders.filter((o) => !String(o.id).startsWith("payt:"));
-  const paytOrders = paytFinais.filter((s) => s.status === "aprovada").map((s) => {
-    const ext = s.id.replace("payt:", "");
-    // link de rastreio dos Correios — monta se não veio pronto
+  const naoWebhookOrders = orders.filter((o) => !ehWebhook(o.id));
+  const webhookOrders = webhookFinais.filter((s) => s.status === "aprovada").map((s) => {
+    const ext = s.id.replace(/^(payt:|redrocket:)/, "");
     let trackUrl = s.trackingUrl || "";
     if (!trackUrl && s.tracking) {
       trackUrl = "https://rastreamento.correios.com.br/app/index.php?objetos=" + s.tracking;
@@ -166,8 +241,8 @@ export default async (req) => {
   });
 
   await writeArr("sales", novasSales.slice(0, 3000));
-  await writeArr("orders", [...paytOrders, ...naoPaytOrders].slice(0, 3000));
+  await writeArr("orders", [...webhookOrders, ...naoWebhookOrders].slice(0, 3000));
 
-  return json({ ok: true, vendasPayt: paytFinais.length,
-    vendasOutras: naoPayt.length, totalVendas: novasSales.length });
+  return json({ ok: true, vendasWebhook: webhookFinais.length,
+    vendasManuais: naoWebhook.length, totalVendas: novasSales.length });
 };

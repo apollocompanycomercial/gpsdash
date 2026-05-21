@@ -200,6 +200,8 @@
   .copydoc h2{font-size:17px;font-weight:800;margin:10px 0 6px}
   .copydoc ul{margin:6px 0 6px 20px}
   .copydoc:focus{background:var(--panel)}
+  .kcard.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-dim)}
+  tr.row.sel{background:var(--blue-bg)}
   @media(max-width:900px){.copy-grid{grid-template-columns:1fr !important}}
 </style>
 <script>
@@ -229,6 +231,7 @@
   let customRange=null; // {de,ate}
   let docLeft=null, docRight=null; // ids dos docs nos dois lados
   let filtroOrigem='todas'; // todas | minhas | afiliados
+  let selecionados=new Set(); // ids selecionados para exclusão em lote
 
   // ---- storage ----
   async function load(){
@@ -859,6 +862,19 @@
   }
 
   function emptyBox(msg){return `<div class="empty"><div class="big">📭</div>${esc(msg)}</div>`;}
+  // barra de ações em lote — aparece quando há itens selecionados
+  function bulkBar(tipo){
+    const n=selecionados.size;
+    if(!n) return '';
+    return `<div style="position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;
+      background:var(--gold);color:#04121f;padding:9px 14px;border-radius:10px;margin-bottom:12px;
+      font-weight:700;box-shadow:var(--shadow)">
+      <span>✓ ${n} selecionado(s)</span>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn sm" data-bulk-clear="1" style="background:rgba(0,0,0,.12)">Limpar seleção</button>
+      <button class="btn sm danger" data-bulk-del="${tipo}">🗑️ Excluir selecionados</button>
+    </div>`;
+  }
 
   // ---------- CONTAS (formato planilha) ----------
   function viewContas(){
@@ -959,13 +975,14 @@
     </div>
     <div class="card">
       <div class="card-head"><h2>📋 Todas as vendas</h2></div>
+      ${bulkBar('sales')}
       ${salesTable(vendas,false)}
     </div>`;
   }
 
   function salesTable(list,compact){
     if(!list.length) return emptyBox('Nenhuma venda registrada.');
-    return `<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Produto / Cliente</th>
+    return `<div class="tbl-wrap"><table><thead><tr>${compact?'':'<th style="width:30px"></th>'}<th>Data</th><th>Produto / Cliente</th>
       <th>Quem vendeu</th><th class="num">Valor</th><th>Pagamento</th><th>Envio</th><th>Tipo</th>${compact?'':'<th></th>'}</tr></thead>
       <tbody>${list.map(s=>{
         const st={aprovada:'green',pendente:'amber',recusada:'red'}[s.status]||'gray';
@@ -978,7 +995,10 @@
           ? `<span class="pill green" style="padding:1px 7px">🏠 ${esc(s.afiliado||'Apollo')}</span>`
           : `<span class="pill amber" style="padding:1px 7px">🤝 ${esc(s.afiliado||'Afiliado')}</span>`;
         const src=s.source==='webhook'?` <span class="pill gray" style="padding:0 6px;font-size:9px">🔗 auto</span>`:'';
-        return `<tr class="row"><td>${s.data}</td>
+        return `<tr class="row ${selecionados.has(s.id)?'sel':''}">
+          ${compact?'':`<td><input type="checkbox" data-pick="${s.id}" ${selecionados.has(s.id)?'checked':''}
+            style="width:15px;height:15px;cursor:pointer"></td>`}
+          <td>${s.data}</td>
           <td><b>${esc(s.produto)}</b>${src}<div style="font-size:10px;color:var(--txt-3)">${esc(s.cliente||'—')}</div>
             ${s.anotacoes?`<div style="font-size:10px;color:var(--gold-2);margin-top:2px">📝 ${esc(s.anotacoes)}</div>`:''}</td>
           <td>${vendedor}</td>
@@ -1017,6 +1037,7 @@
     <div class="card">
       <div class="desc">📌 Separe o que é <b>After Pay</b> (contra-entrega) do que foi pago antecipado.
       Mover o card grava o tipo na venda.</div>
+      ${bulkBar('sales')}
       <div class="kanban">
         ${cols.map(([key,label,color])=>{
           const items=filtrar(S.sales.filter(s=>(s.tipo||'')===key));
@@ -1033,18 +1054,25 @@
   function kcardSale(s){
     const acc=S.accounts.find(a=>a.id===s.accountId);
     const st={aprovada:'green',pendente:'amber',recusada:'red'}[s.status]||'gray';
-    return `<div class="kcard" draggable="true" data-card="sale:${s.id}">
-      <div class="kname">${esc(s.produto)}</div>
-      <div class="kmeta"><span>${esc(s.cliente||'—')}</span><span class="kval">${fmtBRL(+s.valor)}</span></div>
-      <div class="kmeta"><span class="pill ${st}" style="padding:1px 7px">${s.status}</span>
-        <span>${esc(acc?acc.nome:'')}</span><span>${s.data}</span></div>
-      ${s.envioStatus?`<div class="kmeta" style="margin-top:4px">
-        <span class="pill blue" style="padding:1px 7px">🚚 ${esc(s.envioStatus)}</span>
-        ${s.tracking?`<span style="font-size:10px;color:var(--txt-3)">${esc(s.tracking)}</span>`:''}</div>`:''}
-      <div class="kmeta" style="margin-top:4px">
-        <span class="pill ${s.origem==='afiliado'?'amber':'green'}" style="padding:1px 7px">
-        ${s.origem==='afiliado'?'🤝 Afiliado':'🏠 Venda própria'}</span>
-        ${s.origem==='afiliado'&&s.afiliado?`<span style="font-size:10px;color:var(--txt-3)">${esc(s.afiliado)}</span>`:''}</div>
+    const sel=selecionados.has(s.id);
+    return `<div class="kcard ${sel?'sel':''}" draggable="true" data-card="sale:${s.id}">
+      <div style="display:flex;align-items:flex-start;gap:7px">
+        <input type="checkbox" data-pick="${s.id}" ${sel?'checked':''}
+          style="margin-top:3px;width:15px;height:15px;cursor:pointer">
+        <div style="flex:1">
+          <div class="kname">${esc(s.produto)}</div>
+          <div class="kmeta"><span>${esc(s.cliente||'—')}</span><span class="kval">${fmtBRL(+s.valor)}</span></div>
+          <div class="kmeta"><span class="pill ${st}" style="padding:1px 7px">${s.status}</span>
+            <span>${esc(acc?acc.nome:'')}</span><span>${s.data}</span></div>
+          ${s.envioStatus?`<div class="kmeta" style="margin-top:4px">
+            <span class="pill blue" style="padding:1px 7px">🚚 ${esc(s.envioStatus)}</span>
+            ${s.tracking?`<span style="font-size:10px;color:var(--txt-3)">${esc(s.tracking)}</span>`:''}</div>`:''}
+          <div class="kmeta" style="margin-top:4px">
+            <span class="pill ${s.origem==='afiliado'?'amber':'green'}" style="padding:1px 7px">
+            ${s.origem==='afiliado'?'🤝 Afiliado':'🏠 Venda própria'}</span>
+            ${s.origem==='afiliado'&&s.afiliado?`<span style="font-size:10px;color:var(--txt-3)">${esc(s.afiliado)}</span>`:''}</div>
+        </div>
+      </div>
       <div style="margin-top:7px;display:flex;gap:6px">
         <button class="btn sm" data-sale-detail="${s.id}"
           style="flex:1;padding:3px">👤 Dados</button>
@@ -1157,8 +1185,9 @@
       <button class="btn gold" data-act="addOrder">＋ Novo pedido</button>
     </div>
     <div class="card">
-      <div class="desc">🚚 O WebHook da PayLog atualiza o status do card sozinho. Cards em
+      <div class="desc">🚚 O WebHook atualiza o status do card sozinho. Cards em
       <b>⚠️ Problema</b> aparecem com alerta na barra lateral.</div>
+      ${bulkBar('orders')}
       <div class="kanban">
         ${cols.map(([key,label,color])=>{
           const items=S.orders.filter(o=>(o.status||'pendente')===key);
@@ -1174,18 +1203,25 @@
   }
   function kcardOrder(o){
     const trackUrl=o.trackingUrl||(o.tracking?'https://rastreamento.correios.com.br/app/index.php?objetos='+o.tracking:'');
-    return `<div class="kcard" draggable="true" data-card="order:${o.id}">
-      <div class="kname">${esc(o.cliente||'Pedido')}</div>
-      <div class="kmeta"><span>${esc(o.produto||'—')}</span>
-        ${o.valor?`<span class="kval">${fmtBRL(+o.valor)}</span>`:''}</div>
-      ${o.envioStatus?`<div class="kmeta" style="margin-top:3px">
-        <span class="pill blue" style="padding:1px 7px">🚚 ${esc(o.envioStatus)}</span></div>`:''}
-      <div class="kmeta" style="margin-top:3px">
-        ${o.tracking?`<span style="font-size:10px">📦 ${esc(o.tracking)}</span>`
-          :'<span style="font-size:10px;color:var(--txt-3)">sem rastreio</span>'}</div>
-      ${o.telefone?`<div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">📱 ${esc(o.telefone)}</div>`:''}
-      ${o.anotacoes?`<div style="font-size:10.5px;background:var(--panel-3);border-radius:6px;
-        padding:5px 7px;margin-top:5px">📝 ${esc(o.anotacoes)}</div>`:''}
+    const sel=selecionados.has(o.id);
+    return `<div class="kcard ${sel?'sel':''}" draggable="true" data-card="order:${o.id}">
+      <div style="display:flex;align-items:flex-start;gap:7px">
+        <input type="checkbox" data-pick="${o.id}" ${sel?'checked':''}
+          style="margin-top:3px;width:15px;height:15px;cursor:pointer">
+        <div style="flex:1">
+          <div class="kname">${esc(o.cliente||'Pedido')}</div>
+          <div class="kmeta"><span>${esc(o.produto||'—')}</span>
+            ${o.valor?`<span class="kval">${fmtBRL(+o.valor)}</span>`:''}</div>
+          ${o.envioStatus?`<div class="kmeta" style="margin-top:3px">
+            <span class="pill blue" style="padding:1px 7px">🚚 ${esc(o.envioStatus)}</span></div>`:''}
+          <div class="kmeta" style="margin-top:3px">
+            ${o.tracking?`<span style="font-size:10px">📦 ${esc(o.tracking)}</span>`
+              :'<span style="font-size:10px;color:var(--txt-3)">sem rastreio</span>'}</div>
+          ${o.telefone?`<div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">📱 ${esc(o.telefone)}</div>`:''}
+          ${o.anotacoes?`<div style="font-size:10.5px;background:var(--panel-3);border-radius:6px;
+            padding:5px 7px;margin-top:5px">📝 ${esc(o.anotacoes)}</div>`:''}
+        </div>
+      </div>
       <div style="display:flex;gap:6px;margin-top:7px">
         ${trackUrl?`<a class="btn sm" href="${esc(trackUrl)}" target="_blank"
           style="flex:1;text-align:center;text-decoration:none;padding:3px">🔗 Rastrear</a>`:''}
@@ -1906,6 +1942,28 @@
     del('[data-del-task]','tasks','Tarefa');
     document.querySelectorAll('[data-origem]').forEach(b=>b.onclick=()=>{
       filtroOrigem=b.dataset.origem;render();
+    });
+    // seleção múltipla: marcar/desmarcar item
+    document.querySelectorAll('[data-pick]').forEach(cb=>cb.onclick=(e)=>{
+      e.stopPropagation();
+      const id=cb.dataset.pick;
+      if(cb.checked)selecionados.add(id); else selecionados.delete(id);
+      render();
+    });
+    // limpar seleção
+    document.querySelectorAll('[data-bulk-clear]').forEach(b=>b.onclick=()=>{
+      selecionados.clear();render();
+    });
+    // excluir selecionados em lote
+    document.querySelectorAll('[data-bulk-del]').forEach(b=>b.onclick=()=>{
+      const n=selecionados.size;
+      if(!n)return;
+      if(!confirm('Excluir '+n+' item(ns) selecionado(s)? Não dá pra desfazer.'))return;
+      const ids=selecionados;
+      S.sales=S.sales.filter(x=>!ids.has(x.id));
+      S.orders=S.orders.filter(x=>!ids.has(x.id));
+      selecionados=new Set();
+      persist();toast('🗑️ '+n+' item(ns) excluído(s)');
     });
     // abrir detalhes do cliente
     document.querySelectorAll('[data-sale-detail]').forEach(b=>b.onclick=(e)=>{
