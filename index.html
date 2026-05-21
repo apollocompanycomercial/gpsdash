@@ -231,21 +231,22 @@
 
   // ---- storage ----
   async function load(){
-    try{const r=await window.storage.get(K);
-      if(r&&r.value) S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),JSON.parse(r.value));
+    try{
+      const raw=localStorage.getItem(K);
+      if(raw) S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),JSON.parse(raw));
     }catch(e){}
   }
   async function save(){
     // o tráfego do Meta é re-puxado a cada sync — fora do storage
     const leve={...S, trafego:[]};
     try{
-      await window.storage.set(K,JSON.stringify(leve));
+      localStorage.setItem(K,JSON.stringify(leve));
     }catch(e){
-      // tentativa 2: sem o histórico de tráfego e com docs enxutos
+      // tentativa 2: sem histórico pesado
       try{
         const min={...leve, ctwa:(leve.ctwa||[]).slice(0,500),
           sales:(leve.sales||[]).slice(0,1000)};
-        await window.storage.set(K,JSON.stringify(min));
+        localStorage.setItem(K,JSON.stringify(min));
         toast('Salvo (espaço otimizado)');
       }catch(e2){
         toast('⚠️ Erro ao salvar — espaço cheio. Exporte um backup em Configurações.');
