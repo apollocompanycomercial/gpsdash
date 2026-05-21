@@ -22,7 +22,7 @@ export async function writeArr(key, arr) {
 export async function pushRaw(entry) {
   const raw = await readArr("_raw");
   raw.unshift({ at: new Date().toISOString(), ...entry });
-  await writeArr("_raw", raw.slice(0, 40));
+  await writeArr("_raw", raw.slice(0, 200));
 }
 
 // valida o token ?token=... contra o env GPSDASH_SECRET
