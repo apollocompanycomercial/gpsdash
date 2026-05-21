@@ -2,39 +2,42 @@
 <div id="root"></div>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Outfit:wght@400;500;600;700&display=swap');
 
-  /* ---- TEMA ESCURO (padrão de variáveis, sobrescrito por .light) ---- */
+  /* ---- TEMA ESCURO TECH (preto + azul-bebê) ---- */
   :root{
-    --bg:#0a0a0c; --panel:#141417; --panel-2:#1b1b20; --panel-3:#222228;
-    --line:rgba(212,175,55,.14); --line-soft:rgba(255,255,255,.07);
-    --gold:#d4af37; --gold-2:#e8c860; --gold-dim:#9a8030;
-    --txt:#f6f3ea; --txt-2:#c4c1b6; --txt-3:#928f84;
-    --green:#3fae6b; --green-bg:rgba(63,174,107,.14);
-    --red:#e0655c; --red-bg:rgba(224,101,92,.14);
-    --amber:#e0aa45; --amber-bg:rgba(224,170,69,.14);
-    --blue:#6b9fc0; --blue-bg:rgba(107,159,192,.14);
-    --shadow:0 8px 30px rgba(0,0,0,.5);
+    --bg:#070a0f; --panel:#0e131c; --panel-2:#141b27; --panel-3:#1d2736;
+    --line:rgba(120,200,255,.16); --line-soft:rgba(255,255,255,.07);
+    /* "gold" agora é azul — nomes mantidos pra não quebrar o resto do CSS */
+    --gold:#5fc8ff; --gold-2:#8fdcff; --gold-dim:#2a8fd0;
+    --txt:#eef4fb; --txt-2:#aebccd; --txt-3:#6f7e91;
+    --green:#34d399; --green-bg:rgba(52,211,153,.14);
+    --red:#ff6b6b; --red-bg:rgba(255,107,107,.14);
+    --amber:#ffc24b; --amber-bg:rgba(255,194,75,.14);
+    --blue:#5fc8ff; --blue-bg:rgba(95,200,255,.14);
+    --shadow:0 10px 36px rgba(0,0,0,.6);
   }
   .light{
-    --bg:#f4f2ec; --panel:#ffffff; --panel-2:#f7f5ef; --panel-3:#eeebe1;
-    --line:rgba(176,137,32,.28); --line-soft:rgba(0,0,0,.08);
-    --gold:#b08920; --gold-2:#8a6a14; --gold-dim:#c9a542;
-    --txt:#1f1d17; --txt-2:#54514a; --txt-3:#86837a;
-    --green:#1f8d4f; --green-bg:rgba(31,141,79,.12);
-    --red:#c0392b; --red-bg:rgba(192,57,43,.1);
-    --amber:#b8860b; --amber-bg:rgba(184,134,11,.12);
-    --blue:#3a6f8f; --blue-bg:rgba(58,111,143,.1);
-    --shadow:0 6px 24px rgba(0,0,0,.12);
+    --bg:#eef3f9; --panel:#ffffff; --panel-2:#f3f7fc; --panel-3:#e6eef7;
+    --line:rgba(40,143,208,.26); --line-soft:rgba(0,0,0,.08);
+    --gold:#1f8fd0; --gold-2:#15689c; --gold-dim:#5fc8ff;
+    --txt:#0c1622; --txt-2:#46586b; --txt-3:#7c8b9c;
+    --green:#16a36b; --green-bg:rgba(22,163,107,.12);
+    --red:#e0483b; --red-bg:rgba(224,72,59,.1);
+    --amber:#d49216; --amber-bg:rgba(212,146,22,.12);
+    --blue:#1f8fd0; --blue-bg:rgba(31,143,208,.1);
+    --shadow:0 8px 28px rgba(20,60,100,.14);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  #root{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);
+  #root{font-family:'Outfit',Arial,sans-serif;background:var(--bg);color:var(--txt);
     min-height:100vh;font-size:14px;line-height:1.5;transition:background .2s;
-    background-image:radial-gradient(900px 500px at 80% -10%,rgba(212,175,55,.07),transparent),
-      radial-gradient(700px 400px at -10% 110%,rgba(212,175,55,.04),transparent);}
-  .light #root{background-image:radial-gradient(900px 500px at 80% -10%,rgba(176,137,32,.09),transparent),
-      radial-gradient(700px 400px at -10% 110%,rgba(176,137,32,.05),transparent);}
+    background-image:radial-gradient(1000px 560px at 82% -12%,rgba(95,200,255,.16),transparent),
+      radial-gradient(760px 440px at -12% 112%,rgba(95,200,255,.09),transparent);}
+  .light #root{background-image:radial-gradient(1000px 560px at 82% -12%,rgba(95,200,255,.22),transparent),
+      radial-gradient(760px 440px at -12% 112%,rgba(31,143,208,.1),transparent);}
+  h1,h2,.brand b{font-family:'Bricolage Grotesque','Outfit',sans-serif;letter-spacing:-.01em}
   .app{display:flex;min-height:100vh}
+
 
   /* sidebar */
   .side{width:244px;flex-shrink:0;border-right:1px solid var(--line);
@@ -60,7 +63,7 @@
   .theme-toggle button{flex:1;background:var(--panel-2);border:1px solid var(--line-soft);
     color:var(--txt-2);padding:7px;border-radius:8px;cursor:pointer;font-family:inherit;
     font-size:11px;font-weight:600;transition:.14s}
-  .theme-toggle button.on{background:var(--gold);color:#1a1500;border-color:transparent}
+  .theme-toggle button.on{background:var(--gold);color:#04121f;border-color:transparent}
 
   /* main */
   .main{flex:1;padding:26px 30px;overflow:auto;max-height:100vh}
@@ -79,7 +82,7 @@
     font-weight:500;transition:.14s;display:inline-flex;align-items:center;gap:7px}
   .btn:hover{background:var(--panel-2);border-color:var(--gold)}
   .btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));
-    color:#1a1500;border-color:transparent;font-weight:700}
+    color:#04121f;border-color:transparent;font-weight:700}
   .btn.gold:hover{filter:brightness(1.08)}
   .btn.sm{padding:5px 10px;font-size:11.5px}
   .btn.danger{color:var(--red);border-color:var(--red-bg)}
@@ -185,9 +188,19 @@
   .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px;flex-wrap:wrap}
   .seg button{background:none;border:none;color:var(--txt-2);padding:5px 11px;border-radius:6px;
     cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:700}
-  .seg button.on{background:var(--gold);color:#1a1500}
+  .seg button.on{background:var(--gold);color:#04121f}
   code{background:var(--panel-2);padding:2px 6px;border-radius:5px;font-size:11.5px;color:var(--gold-2);
     border:1px solid var(--line-soft)}
+  .ebtn{background:var(--panel);border:1px solid var(--line-soft);color:var(--txt);
+    min-width:30px;height:30px;padding:0 7px;border-radius:7px;cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:700;transition:.12s}
+  .ebtn:hover{border-color:var(--gold);filter:brightness(1.05)}
+  .ebtn:active{transform:scale(.94)}
+  .copydoc:empty:before{content:'Escreva sua copy aqui…';color:var(--txt-3)}
+  .copydoc h2{font-size:17px;font-weight:800;margin:10px 0 6px}
+  .copydoc ul{margin:6px 0 6px 20px}
+  .copydoc:focus{background:var(--panel)}
+  @media(max-width:900px){.copy-grid{grid-template-columns:1fr !important}}
 </style>
 <script>
 (function(){
@@ -206,14 +219,15 @@
       {id:'a1',nome:'AP CA08',metaId:'1479485729200192',status:'ativa'},
       {id:'a2',nome:'Contingência Black',metaId:'993400546343835',status:'ativa'}
     ],
-    trafego:[], sales:[], orders:[], ctwa:[],
-    config:{backendUrl:'',token:'',theme:'light'}
+    trafego:[], sales:[], orders:[], ctwa:[], tasks:[], docs:[], devocionalFeito:{},
+    config:{backendUrl:'',token:'',theme:'dark'}
   };
 
   let S=JSON.parse(JSON.stringify(DEFAULT));
   let tab='dash', modal=null, filterAcc='all', filterRange=7, drag=null;
   let syncState={status:'idle',at:null};
   let customRange=null; // {de,ate}
+  let docLeft=null, docRight=null; // ids dos docs nos dois lados
 
   // ---- storage ----
   async function load(){
@@ -222,8 +236,21 @@
     }catch(e){}
   }
   async function save(){
-    try{await window.storage.set(K,JSON.stringify(S));}
-    catch(e){toast('Erro ao salvar — '+e.message);}
+    // o tráfego do Meta é re-puxado a cada sync — fora do storage
+    const leve={...S, trafego:[]};
+    try{
+      await window.storage.set(K,JSON.stringify(leve));
+    }catch(e){
+      // tentativa 2: sem o histórico de tráfego e com docs enxutos
+      try{
+        const min={...leve, ctwa:(leve.ctwa||[]).slice(0,500),
+          sales:(leve.sales||[]).slice(0,1000)};
+        await window.storage.set(K,JSON.stringify(min));
+        toast('Salvo (espaço otimizado)');
+      }catch(e2){
+        toast('⚠️ Erro ao salvar — espaço cheio. Exporte um backup em Configurações.');
+      }
+    }
   }
   function persist(){save();render();}
 
@@ -237,18 +264,28 @@
   }
 
   // ---- filtro de período ----
+  function yesterday(){
+    const d=new Date(); d.setDate(d.getDate()-1);
+    return d.toISOString().slice(0,10);
+  }
   function inRange(dateStr){
-    if(customRange) return dateStr>=customRange.de && dateStr<=customRange.ate;
+    if(!dateStr) return false;
+    const ds=String(dateStr).slice(0,10);
+    if(customRange) return ds>=customRange.de && ds<=customRange.ate;
     if(filterRange==='all') return true;
-    if(filterRange==='today') return dateStr===today();
-    const d=new Date(dateStr+'T12:00'), now=new Date();
-    const diff=(now-d)/86400000;
-    return diff<=filterRange && diff>=-1;
+    if(filterRange==='today') return ds===today();
+    if(filterRange==='yesterday') return ds===yesterday();
+    // calcula a data-limite N dias atrás e compara como string (imune a fuso)
+    const lim=new Date();
+    lim.setDate(lim.getDate()-(Number(filterRange)-1));
+    const limStr=lim.toISOString().slice(0,10);
+    return ds>=limStr && ds<=today();
   }
   function accOk(id){return filterAcc==='all'||id===filterAcc;}
   function rangeLabel(){
     if(customRange) return customRange.de+' a '+customRange.ate;
     if(filterRange==='today') return 'Hoje';
+    if(filterRange==='yesterday') return 'Ontem';
     if(filterRange==='all') return 'Todo o período';
     return 'Últimos '+filterRange+' dias';
   }
@@ -266,8 +303,10 @@
     // derivadas
     a.cpm = a.impressions? (a.investimento/a.impressions*1000):0;
     a.ctr = a.impressions? (a.linkClicks/a.impressions*100):0;
-    a.hookRate = a.vPlay? (a.vP25/a.vPlay*100):0;       // % que passou de 25%
-    a.holdRate = a.vPlay? (a.vP100/a.vPlay*100):0;      // % que viu até o fim
+    // Hook Rate = views de 3s ÷ impressões  (quanto do público o vídeo "fisga")
+    a.hookRate = a.impressions? (a.vPlay/a.impressions*100):0;
+    // Hold Rate = ThruPlay (15s ou vídeo completo) ÷ impressões  (retenção real)
+    a.holdRate = a.impressions? (a.vThru/a.impressions*100):0;
     a.custoConversa = a.conversas? (a.investimento/a.conversas):0;
     a.convPorMsg = a.linkClicks? (a.conversas/a.linkClicks):0;
     return a;
@@ -279,17 +318,23 @@
     const sl=S.sales.filter(s=>inRange(s.data)&&accOk(s.accountId));
     const a=aggTraf(tf);
     const aprov=sl.filter(s=>s.status==='aprovada');
-    const receita=aprov.reduce((x,s)=>x+(+s.valor||0),0);
+    const receitaPayt=aprov.reduce((x,s)=>x+(+s.valor||0),0);
     const receitaTotal=sl.reduce((x,s)=>x+(+s.valor||0),0);
-    const comprasAprov=aprov.length;
+    const comprasAprovPayt=aprov.length;
+    // fonte: se já tem venda na Payt usa ela; senão usa o que o Meta reporta
+    const temPayt = sl.length>0;
+    const compras = temPayt? sl.length : a.comprasMeta;
+    const comprasAprov = temPayt? comprasAprovPayt : a.comprasMeta;
+    const receita = temPayt? receitaPayt : a.valorComprasMeta;
     return {
       ...a,
-      comprasPlataforma:sl.length, comprasAprov,
-      receita, receitaTotal,
+      fontePayt:temPayt,
+      comprasPlataforma:compras, comprasAprov,
+      receita, receitaTotal: temPayt? receitaTotal : a.valorComprasMeta,
       roas: a.investimento? receita/a.investimento:0,
       ticket: comprasAprov? receita/comprasAprov:0,
       cpa: comprasAprov? a.investimento/comprasAprov:0,
-      taxaAprov: sl.length? comprasAprov/sl.length*100:0,
+      taxaAprov: temPayt&&sl.length? comprasAprovPayt/sl.length*100:100,
       leadsPorVenda: comprasAprov? a.conversas/comprasAprov:0
     };
   }
@@ -311,6 +356,8 @@
       ['afterpay','🔄','Kanban After Pay',S.sales.filter(s=>!s.tipo).length],
       ['pedidos','📦','Kanban Pedidos',S.orders.filter(o=>o.status==='problema').length],
       ['ctwa','💬','WhatsApp CTWA',S.ctwa.filter(c=>!c.enviadoMeta).length],
+      ['tarefas','✅','Tarefas do Dia',(S.tasks||[]).filter(t=>!t.done).length],
+      ['criativos','✍️','Criativos / Copy',0],
       ['config','⚙️','Configurações',0]
     ];
     return `<div class="side">
@@ -341,7 +388,7 @@
 
   function rangeBar(){
     return `<div class="seg" id="rangeSeg">
-      ${[['today','Hoje'],[7,'7d'],[15,'15d'],[30,'30d'],[90,'90d'],['all','Tudo']].map(([v,l])=>
+      ${[['today','Hoje'],['yesterday','Ontem'],[7,'7d'],[15,'15d'],[30,'30d'],[90,'90d'],['all','Tudo']].map(([v,l])=>
         `<button data-r="${v}" class="${!customRange&&String(filterRange)===String(v)?'on':''}">${l}</button>`).join('')}
       <button data-r="custom" class="${customRange?'on':''}">📅 Período</button>
     </div>
@@ -353,10 +400,265 @@
 
   function view(){
     return ({dash:viewDash,contas:viewContas,vendas:viewVendas,afterpay:viewAfterpay,
-      pedidos:viewPedidos,ctwa:viewCtwa,config:viewConfig}[tab]||viewDash)();
+      pedidos:viewPedidos,ctwa:viewCtwa,tarefas:viewTarefas,criativos:viewCriativos,
+      config:viewConfig}[tab]||viewDash)();
   }
 
   // ---------- DASHBOARD ----------
+  // ---- versículo do dia (foco em trabalho, prosperidade, perseverança) ----
+  const VERSICULOS=[
+    ['O que trabalha com mão diligente se enriquece.','Provérbios 10:4'],
+    ['Tudo posso naquele que me fortalece.','Filipenses 4:13'],
+    ['E tudo quanto fizerdes, fazei-o de todo o coração, como ao Senhor.','Colossenses 3:23'],
+    ['Os planos do diligente tendem à abundância.','Provérbios 21:5'],
+    ['Não desanimemos de fazer o bem, pois a seu tempo ceifaremos, se não desfalecermos.','Gálatas 6:9'],
+    ['Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará.','Salmos 37:5'],
+    ['O Senhor te abençoará em tudo quanto fizeres.','Deuteronômio 15:10'],
+    ['Vês um homem perito na sua obra? Perante reis será posto.','Provérbios 22:29'],
+    ['Esforça-te, e tem bom ânimo; não temas, nem te espantes.','Josué 1:9'],
+    ['A bênção do Senhor é que enriquece, e não acrescenta dores.','Provérbios 10:22'],
+    ['Aquele que semeia com fartura, com fartura também ceifará.','2 Coríntios 9:6'],
+    ['O coração do homem planeja o seu caminho, mas o Senhor lhe dirige os passos.','Provérbios 16:9'],
+    ['Porque eu bem sei os pensamentos que tenho a vosso respeito, pensamentos de paz, e não de mal.','Jeremias 29:11'],
+    ['Os que esperam no Senhor renovarão as suas forças.','Isaías 40:31'],
+    ['Lança o teu pão sobre as águas, porque depois de muitos dias o acharás.','Eclesiastes 11:1'],
+    ['Põe a tua confiança no Senhor de todo o teu coração.','Provérbios 3:5'],
+    ['Em tudo dai graças, porque esta é a vontade de Deus.','1 Tessalonicenses 5:18'],
+    ['Mãos negligentes empobrecem, mas a mão dos diligentes enriquece.','Provérbios 10:4'],
+    ['O Senhor é a minha força e o meu escudo; nele confiou o meu coração.','Salmos 28:7'],
+    ['Bem-aventurado o homem que acha sabedoria, porque é melhor a sua mercadoria do que a prata.','Provérbios 3:13']
+  ];
+  function versiculoDoDia(){
+    // muda todo dia, baseado na data
+    const d=new Date();
+    const idx=(d.getFullYear()*372 + d.getMonth()*31 + d.getDate()) % VERSICULOS.length;
+    return VERSICULOS[idx];
+  }
+  function versiculoCard(){
+    const [txt,ref]=versiculoDoDia();
+    return `<div class="card" style="background:linear-gradient(135deg,rgba(212,175,55,.16),var(--panel));
+      border-color:var(--gold-dim)">
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="font-size:26px;line-height:1">📖</div>
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--gold-2);font-weight:700;letter-spacing:1px;
+            text-transform:uppercase;margin-bottom:6px">Palavra do dia ✨</div>
+          <div style="font-size:15px;font-weight:600;font-style:italic;line-height:1.55">
+            "${esc(txt)}"</div>
+          <div style="font-size:12px;color:var(--txt-2);margin-top:7px;font-weight:700">— ${esc(ref)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+  // ---- Devocional de 30 dias (tema, mensagem, história aplicável, oração) ----
+  const DEVOCIONAIS=[
+    {t:'Comece com propósito',
+     m:'Todo dia de trabalho é uma folha em branco. Antes de abrir o painel, abrir as campanhas, responder a primeira mensagem — pare. Respire. Lembre que o que você constrói tem um propósito maior do que o número na tela. Deus não te deu talento pra você desperdiçar em ansiedade. Ele te deu pra você multiplicar com paz.',
+     h:'Na parábola dos talentos (Mateus 25), o senhor não cobrou do servo o tamanho do resultado — cobrou a coragem de agir. O servo que enterrou o talento foi repreendido não por perder dinheiro, mas por ter sido paralisado pelo medo. Hoje, não enterre o seu dia no medo. Coloque seus talentos pra trabalhar.',
+     o:'Senhor, eu entrego este dia nas Tuas mãos. Que cada decisão que eu tomar tenha o Teu direcionamento. Tira de mim o medo e me dá coragem para agir com sabedoria. Que o meu trabalho hoje seja uma oferta a Ti. Amém.'},
+    {t:'A diligência silenciosa',
+     m:'Existe um trabalho que ninguém vê: o ajuste fino, o teste que falhou, a copy reescrita pela décima vez. É nesse trabalho invisível que o caráter se forma. Não despreze os dias pequenos. A consistência no escondido é o que constrói o resultado no aberto.',
+     h:'Davi era pastor de ovelhas muito antes de ser rei. Ninguém o via cuidando do rebanho, enfrentando o leão e o urso no anonimato. Mas foi naquele trabalho silencioso que Deus formou o homem que enfrentaria Golias. O que você faz quando ninguém vê está te preparando para o que todos verão.',
+     o:'Pai, me ajuda a ser fiel nas pequenas coisas. Quando o trabalho for cansativo e invisível, lembra-me de que Tu vês tudo. Forma o meu caráter no escondido. Amém.'},
+    {t:'Ansiedade não paga conta',
+     m:'A preocupação rouba a energia que você precisa pra resolver o problema. Você já reparou? Ninguém nunca melhorou um ROAS se desesperando. A ansiedade é um imposto que você paga adiantado por um problema que talvez nem aconteça. Troque a preocupação pela ação possível de hoje.',
+     h:'Jesus disse: "Qual de vós, por mais que se preocupe, pode acrescentar um côvado à sua estatura?" (Mateus 6:27). Ele apontou para os lírios do campo — que não se afadigam, e ainda assim são vestidos com beleza. O recado não é "não trabalhe", é "não se corroa". Faça a tua parte e confie o resto.',
+     o:'Senhor, eu coloco diante de Ti tudo o que me preocupa hoje. As metas, as contas, o que não controlo. Troca a minha ansiedade pela Tua paz. Eu faço a minha parte; o resto entrego a Ti. Amém.'},
+    {t:'O vício que rouba o foco',
+     m:'Todo vício promete alívio e cobra liberdade. Pode ser a rolagem infinita do feed, a checagem compulsiva de métrica a cada 5 minutos, qualquer fuga que parece descanso mas é só dispersão. Hoje, identifique uma coisa que está roubando seu foco e coloque um limite. Liberdade é poder escolher.',
+     h:'Paulo escreveu: "Todas as coisas me são lícitas, mas nem todas convêm; todas as coisas me são lícitas, mas eu não me deixarei dominar por nenhuma" (1 Coríntios 6:12). Ele entendeu que o problema não é só o que é certo ou errado — é o que te domina. Não deixe nada além de Deus ter as rédeas da sua mente.',
+     o:'Deus, me mostra hoje o que está me dominando sem eu perceber. Me dá força para colocar limites e disciplina para mantê-los. Quero ter a mente livre para Te servir e trabalhar bem. Amém.'},
+    {t:'Trabalhe como para o Senhor',
+     m:'Tem um tipo de excelência que não depende de quem está olhando. Quando você escreve uma copy, monta uma campanha, responde um cliente — você pode fazer no automático ou pode fazer como uma oferta. A diferença não está no resultado imediato, está em quem você se torna fazendo.',
+     h:'"E tudo quanto fizerdes, fazei-o de todo o coração, como ao Senhor e não aos homens" (Colossenses 3:23). Essa carta foi escrita até para servos — pessoas em trabalho duro e sem reconhecimento. Paulo elevou o trabalho comum a um ato de adoração. O seu trabalho de hoje pode ser isso.',
+     o:'Senhor, que tudo o que eu fizer hoje seja feito de coração, como para Ti. Tira de mim a preguiça e o "tanto faz". Que a minha excelência seja uma forma de Te honrar. Amém.'},
+    {t:'O descanso também é mandamento',
+     m:'Você não é uma máquina de produzir. Deus, que poderia ter criado o mundo em um instante, escolheu descansar no sétimo dia — não por cansaço, mas para ensinar um ritmo. Quem não descansa não rende; quem não para, não enxerga. Hoje, planeje o seu descanso com a mesma seriedade que planeja o seu trabalho.',
+     h:'No deserto, Deus mandava o povo recolher o maná para um dia só — exceto antes do sábado, quando recolhiam para dois. Quem tentava estocar por ganância via o maná apodrecer (Êxodo 16). A lição: confiar que amanhã também haverá provisão. Você não precisa carregar o peso de todos os dias hoje.',
+     o:'Pai, me ensina o ritmo certo entre trabalho e descanso. Que eu não confunda movimento com progresso. Que eu descanse confiando que Tu cuidas do amanhã. Amém.'},
+    {t:'Semeia hoje, colhe depois',
+     m:'O trabalho de hoje raramente paga hoje. A campanha que você ajusta agora dá resultado daqui a dias. A copy que você melhora hoje converte semana que vem. Quem precisa de recompensa imediata desiste cedo. Quem entende o tempo da semeadura permanece.',
+     h:'"E não nos cansemos de fazer o bem, porque a seu tempo ceifaremos, se não desfalecermos" (Gálatas 6:9). A palavra-chave é "a seu tempo". O agricultor não desenterra a semente todo dia para ver se cresceu. Ele rega, espera e confia no processo que Deus criou.',
+     o:'Senhor, me dá paciência para o tempo da colheita. Que eu não desanime entre semear e ceifar. Ajuda-me a permanecer fiel mesmo sem ver o resultado ainda. Amém.'},
+    {t:'A integridade no detalhe',
+     m:'Quem você é nos detalhes pequenos é quem você é de verdade. A promessa que você cumpre, o cliente que você não engana, o número que você não infla pra parecer melhor. A integridade não dá um pico de resultado — ela dá algo melhor: uma base que não desmorona.',
+     h:'"Quem é fiel no pouco, também é fiel no muito; e quem é injusto no pouco, também é injusto no muito" (Lucas 16:10). Jesus ligou diretamente o caráter no pequeno à confiança no grande. Deus observa como você lida com o que parece insignificante.',
+     o:'Deus, me ajuda a ter integridade nos detalhes que ninguém vê. Que eu seja a mesma pessoa no escondido e no aberto. Constrói em mim uma base firme. Amém.'},
+    {t:'Quando o resultado não vem',
+     m:'Vai ter dia que você fez tudo certo e o resultado não veio. A campanha não escalou, a venda não fechou, o esforço não rendeu. Esses dias testam não a sua competência, mas a sua fé. Resultado é consequência; fidelidade é escolha. Continue escolhendo.',
+     h:'Os discípulos pescaram a noite inteira e não pegaram nada. Quando Jesus mandou lançar a rede de novo, Pedro respondeu: "sobre a tua palavra lançarei a rede" (Lucas 5:5). Ele estava cansado e sem resultado, mas obedeceu mais uma vez. A pesca milagrosa veio depois da persistência obediente.',
+     o:'Senhor, nos dias em que o resultado não vem, segura a minha fé. Que eu não meça o meu valor pelo número da tela. Me dá forças para lançar a rede mais uma vez. Amém.'},
+    {t:'Comunhão acima da competição',
+     m:'O mercado te ensina a ver todo mundo como concorrente. Mas a vida foi feita para comunhão, não para isolamento. Ter com quem dividir uma ideia, uma vitória, uma dúvida — isso não é fraqueza, é sabedoria. Ninguém constrói algo grande sozinho e em paz ao mesmo tempo.',
+     h:'"Melhor é serem dois do que um, porque têm melhor paga do seu trabalho. Se um cair, o outro levanta o seu companheiro" (Eclesiastes 4:9-10). Salomão, o homem mais rico de sua era, sabia: prosperidade sem ninguém ao lado é solidão. Cultive as pessoas certas perto de você.',
+     o:'Pai, me dá pessoas certas para caminhar comigo. Tira de mim o orgulho de achar que preciso fazer tudo sozinho. Que eu valorize a comunhão acima da competição. Amém.'},
+    {t:'A oração antes da estratégia',
+     m:'Você abre o dia conferindo métrica ou conversando com Deus? Não tem nada de errado em planejar — mas a primeira voz que você ouve de manhã molda o resto do dia. Cinco minutos de oração antes da estratégia mudam a fonte de onde você tira a sua paz.',
+     h:'"De madrugada, muito antes de o dia clarear, Jesus se levantou e saiu para um lugar deserto, e ali orava" (Marcos 1:35). O homem mais ocupado e requisitado que já existiu priorizava a oração antes da agenda. Se Ele precisava, você também precisa.',
+     o:'Senhor, que a primeira coisa que eu faça hoje seja Te buscar. Antes da estratégia, a oração. Antes do número, a Tua presença. Conduz o meu dia. Amém.'},
+    {t:'O perigo da ganância',
+     m:'Querer crescer é bom. Querer crescer a qualquer custo é uma armadilha. A ganância nunca diz "chega" — ela só move a linha de chegada para mais longe. Hoje, defina o que é suficiente. Não para parar de crescer, mas para crescer livre, sem ser escravo do "mais".',
+     h:'Jesus contou sobre o homem rico que teve uma supercolheita e decidiu construir celeiros maiores para guardar tudo, dizendo à sua alma: "descansa, come, bebe". Mas naquela noite sua vida foi pedida (Lucas 12). A lição não é contra prosperar — é contra fazer do acúmulo o sentido da vida.',
+     o:'Deus, me ensina a diferença entre ambição saudável e ganância. Que eu prospere sem virar escravo do dinheiro. Que a minha segurança esteja em Ti, não no celeiro. Amém.'},
+    {t:'Palavras que constroem',
+     m:'Você passa o dia escrevendo — copy, mensagem, resposta. Palavras são a sua ferramenta. Mas elas constroem ou destroem também fora do trabalho: na conversa com a equipe, na mensagem para a família, no que você fala de si mesmo. Use o seu dom de comunicar para edificar.',
+     h:'"A morte e a vida estão no poder da língua" (Provérbios 18:21). Salomão não estava exagerando. As palavras que você repete sobre o seu negócio, sobre as pessoas e sobre você mesmo plantam realidades. Escolha plantar vida.',
+     o:'Senhor, governa a minha língua hoje. Que as minhas palavras construam, encorajem e tragam vida. Tanto nas copies quanto nas conversas. Amém.'},
+    {t:'Aprenda com o fracasso',
+     m:'Uma campanha que não performou não é um veredito sobre você — é um dado. O fracasso só é desperdício se você não extrair a lição. Quem erra e aprende avança; quem erra e só se culpa, trava. Hoje, olhe um erro recente e pergunte: o que isso me ensina?',
+     h:'Pedro negou Jesus três vezes — um fracasso enorme, público e doloroso. Mas Jesus o restaurou e três vezes lhe confiou: "apascenta as minhas ovelhas" (João 21). O fracasso de Pedro não foi o fim; foi parte da formação do líder que ele se tornou.',
+     o:'Pai, me ajuda a aprender com os meus erros sem me afundar neles. Transforma cada fracasso em lição. Restaura a minha confiança como restauraste Pedro. Amém.'},
+    {t:'Generosidade que volta',
+     m:'Existe uma economia espiritual que o mercado não ensina: dar abre, reter fecha. Não é mágica — é princípio. Quem compartilha conhecimento, ajuda quem está começando, abençoa sem esperar retorno, vive uma abundância que o sovina nunca conhece.',
+     h:'"Há quem reparte, e ainda lhe é acrescentado mais; e há quem retém mais do que é justo, mas para a sua pobreza" (Provérbios 11:24). É um paradoxo divino: a mão fechada para dar também fica fechada para receber. A generosidade não te empobrece.',
+     o:'Senhor, me dá um coração generoso. Que eu reparta conhecimento, tempo e recursos sem medo. Confio que Tu és a minha fonte. Amém.'},
+    {t:'Foco: uma coisa de cada vez',
+     m:'A dispersão se disfarça de produtividade. Dez abas abertas, cinco projetos pela metade, a sensação de estar sempre correndo e nunca chegando. Foco é escolher o que NÃO fazer agora. Hoje, escolha a tarefa mais importante e termine ela antes de começar outra.',
+     h:'Marta estava "distraída com muitos serviços" enquanto Maria escolheu o essencial — sentar aos pés de Jesus. Ele disse: "Maria escolheu a boa parte" (Lucas 10:42). Não que servir fosse errado; o problema era a distração ansiosa de Marta. Foco é escolher a boa parte.',
+     o:'Deus, me dá clareza para escolher o que importa hoje. Tira de mim a dispersão ansiosa. Que eu faça uma coisa bem feita de cada vez. Amém.'},
+    {t:'Sua identidade não é o seu resultado',
+     m:'Num dia de venda boa você se sente um gênio; num dia ruim, um fracasso. Esse sobe-e-desce é exaustivo — e é mentira. Você não é o seu ROAS. O seu valor foi definido antes de qualquer métrica existir. Trabalhe a partir da segurança, não para conquistá-la.',
+     h:'Quando Jesus foi batizado, antes de fazer um único milagre, o céu se abriu e Deus declarou: "Este é o meu Filho amado, em quem me comprazo" (Mateus 3:17). A aprovação veio ANTES da performance. A sua identidade como filho de Deus não depende do seu desempenho.',
+     o:'Pai, me lembra hoje de quem eu sou em Ti. Que o meu valor não suba e desça com os números. Eu trabalho a partir do Teu amor, não para merecê-lo. Amém.'},
+    {t:'Persistência na adversidade',
+     m:'Vai ter temporada difícil. Conta de anúncio bloqueada, mercado mudando, algo quebrando bem quando você não podia. A adversidade não pergunta se é um bom momento. Mas ela também não tem a palavra final. Quem persiste com fé atravessa o que faz o desistente parar.',
+     h:'Paulo listou o que enfrentou: naufrágios, prisões, fome, perigos de todo tipo (2 Coríntios 11). E ainda escreveu: "estou bem certo de que nem a morte, nem a vida... poderá nos separar do amor de Deus" (Romanos 8:38-39). A adversidade dele foi real — e a fé dele, maior.',
+     o:'Senhor, nas temporadas difíceis, segura a minha mão. Que a adversidade não tenha a palavra final sobre mim. Me dá persistência que vem da fé. Amém.'},
+    {t:'Gratidão muda a perspectiva',
+     m:'É fácil ver só o que falta: a meta não batida, o que o concorrente tem, o próximo nível. Mas a gratidão reorganiza os olhos. Antes de listar o que você quer, liste três coisas que você já tem. Quem agradece o caminho anda mais leve.',
+     h:'Dez leprosos foram curados por Jesus. Só um voltou para agradecer. Jesus perguntou: "Não foram dez os curados? Onde estão os nove?" (Lucas 17:17). Todos receberam a cura; só um recebeu também a alegria de reconhecer a graça. A gratidão completa a bênção.',
+     o:'Senhor, abre os meus olhos para tudo o que eu já tenho. Que eu seja como o leproso que voltou. Recebe a minha gratidão por este dia, por este trabalho, pela vida. Amém.'},
+    {t:'Sabedoria pede direção',
+     m:'Tem decisão que números não resolvem. Escalar ou segurar? Contratar ou esperar? Mudar o rumo ou insistir? A inteligência analisa os dados; a sabedoria pede direção a quem vê o que você não vê. Não tome as decisões grandes sozinho e na pressa.',
+     h:'"Se algum de vós tem falta de sabedoria, peça-a a Deus, que a todos dá liberalmente e nada lhes lança em rosto, e ser-lhe-á concedida" (Tiago 1:5). Deus não se irrita quando você pede direção — Ele dá de bom grado. Pedir sabedoria é sinal de maturidade, não de fraqueza.',
+     o:'Deus, eu preciso de sabedoria para as decisões de hoje. Mostra-me o que eu não consigo enxergar sozinho. Conduz os meus passos. Amém.'},
+    {t:'O orgulho precede a queda',
+     m:'O sucesso tem um efeito colateral perigoso: faz a gente achar que não precisa mais aprender, ouvir, ou se cuidar. O orgulho não avisa que chegou — ele se disfarça de confiança. Hoje, faça um exercício de humildade: peça uma opinião e ouça de verdade.',
+     h:'"A soberba precede a ruína, e a altivez do espírito precede a queda" (Provérbios 16:18). O rei Nabucodonosor, no auge, olhou seu império e se gabou: "esta é a grande Babilônia que eu edifiquei". Naquele instante perdeu tudo (Daniel 4). O orgulho cega antes de derrubar.',
+     o:'Pai, me guarda do orgulho que se disfarça de confiança. Que eu nunca pare de aprender e ouvir. Mantém o meu coração humilde mesmo nas vitórias. Amém.'},
+    {t:'Honre quem trabalha com você',
+     m:'Você não constrói sozinho. Tem gente que te ajuda — sócio, prestador, fornecedor, quem responde mensagem, quem produz criativo. A forma como você trata quem trabalha com você revela o seu caráter mais do que qualquer resultado. Honre, pague bem, reconheça.',
+     h:'"Não retenhas o salário do trabalhador pobre... no seu dia lhe darás o seu salário" (Deuteronômio 24:14-15). Deus se importa com como o trabalhador é tratado. A prosperidade construída sobre a exploração do outro tem um custo que não aparece na planilha.',
+     o:'Senhor, me ajuda a honrar quem trabalha comigo. Que eu seja justo, generoso e grato. Que o meu sucesso abençoe quem está ao meu lado. Amém.'},
+    {t:'A paz que excede o entendimento',
+     m:'Existe uma paz que não depende das circunstâncias. Não é a ausência de problemas — é uma quietude interior no meio deles. Ela não vem de resolver tudo; vem de entregar tudo. Hoje, no meio do que estiver pesado, busque essa paz que não faz sentido lógico.',
+     h:'"Não andeis ansiosos por coisa alguma; antes em tudo sejam os vossos pedidos conhecidos diante de Deus pela oração... E a paz de Deus, que excede todo o entendimento, guardará os vossos corações" (Filipenses 4:6-7). Paulo escreveu isso de uma prisão. A paz dele não dependia da cela.',
+     o:'Senhor, me dá a Tua paz que excede o entendimento. Que ela guarde o meu coração no meio dos problemas. Eu entrego tudo a Ti. Amém.'},
+    {t:'Disciplina é amor pelo futuro',
+     m:'Disciplina parece dura no momento, mas é a forma mais concreta de amar o seu "eu" de amanhã. Acordar no horário, cumprir o planejado, resistir à distração — cada ato disciplinado é um presente que você manda pro futuro. Indisciplina é roubar de si mesmo.',
+     h:'"Toda disciplina, no momento, não parece ser motivo de alegria, mas de tristeza; ao depois, no entanto, produz fruto pacífico aos que por ela têm sido exercitados" (Hebreus 12:11). O texto admite: dói agora. Mas o fruto vem "ao depois". Disciplina é fé aplicada ao tempo.',
+     o:'Deus, me dá disciplina que nasce do amor, não da culpa. Que eu cuide hoje do meu "eu" de amanhã. Que o fruto pacífico venha. Amém.'},
+    {t:'Não compare a sua jornada',
+     m:'A comparação é o ladrão silencioso da alegria. Você olha o lançamento do outro, o número do outro, a aparente facilidade do outro — e esquece que está vendo o capítulo 20 dele com o seu capítulo 3. Cada jornada tem o seu tempo. Corra a SUA corrida.',
+     h:'Quando Pedro perguntou a Jesus sobre o futuro de João — basicamente, "e quanto a ele?" — Jesus respondeu: "que te importa? Segue-me tu" (João 21:22). A resposta foi direta: pare de medir a sua vida pela do outro. O chamado é pessoal.',
+     o:'Senhor, tira de mim o vício de comparar. Que eu corra a corrida que Tu traçaste para mim, no tempo que é meu. Liberta-me da inveja e da pressa. Amém.'},
+    {t:'O valor de servir',
+     m:'O mercado glorifica quem manda. O Reino glorifica quem serve. Não são opostos: os melhores líderes são os que mais servem. Hoje, procure uma forma de servir — um cliente, um membro da equipe, alguém que não pode te retribuir. Servir mantém o coração no lugar certo.',
+     h:'Jesus, na última noite, pegou uma toalha e lavou os pés dos discípulos — tarefa de escravo. Depois disse: "dei-vos o exemplo, para que, como eu vos fiz, façais vós também" (João 13:15). O maior líder da história definiu grandeza como serviço.',
+     o:'Pai, me dá um coração de servo. Que eu use a minha posição para servir, não para ser servido. Mantém o meu coração humilde. Amém.'},
+    {t:'Confie no processo de Deus',
+     m:'Às vezes o caminho não faz sentido. A porta que fechou, o atraso que veio, o "não" que doeu. Você não vê o quadro inteiro — só o pedaço de hoje. Confiar é acreditar que Aquele que vê o todo está costurando até os fios que parecem soltos.',
+     h:'José foi vendido como escravo, preso injustamente, esquecido. Anos depois, governando o Egito, disse aos irmãos que o traíram: "vós intentastes o mal contra mim, porém Deus o tornou em bem" (Gênesis 50:20). Cada etapa ruim era um fio da costura que ele só entendeu no fim.',
+     o:'Senhor, eu confio no Teu processo mesmo quando não entendo. Que eu creia que Tu transformas em bem até o que parece perdido. Conduz a minha história. Amém.'},
+    {t:'Renove a sua mente',
+     m:'O que você alimenta a sua mente determina como você trabalha e vive. Notícia ruim, comparação, conteúdo vazio — tudo isso molda o seu humor e as suas decisões. Hoje, escolha conscientemente o que entra na sua mente. Renovar o pensamento é renovar a vida.',
+     h:'"Não vos conformeis com este século, mas transformai-vos pela renovação da vossa mente" (Romanos 12:2). Paulo aponta a mente como o campo de batalha. A transformação não começa nas circunstâncias — começa no que você pensa e no que você deixa entrar.',
+     o:'Deus, renova a minha mente hoje. Me ajuda a escolher o que alimento o meu pensamento. Que eu seja transformado de dentro para fora. Amém.'},
+    {t:'A coragem de recomeçar',
+     m:'Tem projeto que precisa morrer pra outro nascer. Tem estratégia que deu o que tinha que dar. Recomeçar não é fracasso — é sabedoria de saber a hora. Não carregue pelo orgulho o que já não serve. A coragem de recomeçar é a coragem de crescer.',
+     h:'"As misericórdias do Senhor são a causa de não sermos consumidos; renovam-se cada manhã" (Lamentações 3:22-23). Foi escrito em meio à destruição de Jerusalém — no fundo do poço. Mesmo ali, a verdade permanece: cada manhã é uma misericórdia nova, uma chance de recomeçar.',
+     o:'Senhor, me dá coragem para recomeçar o que precisa ser recomeçado. Que eu não carregue pelo orgulho o que já passou. Obrigado pela misericórdia nova de hoje. Amém.'},
+    {t:'Trabalho com eternidade em vista',
+     m:'No fim, o número da tela não é o que fica. O que fica é quem você se tornou, quem você abençoou, o caráter que construiu. Trabalhe duro, busque resultado — mas com a eternidade em vista. Isso não te faz trabalhar menos; te faz trabalhar com mais sentido.',
+     h:'"Ajuntai tesouros no céu, onde nem a traça nem a ferrugem consomem... porque onde estiver o teu tesouro, aí estará também o teu coração" (Mateus 6:20-21). Jesus não condenou o trabalho nem a provisão — ele apontou para onde colocar o coração. Trabalhe pelo temporal, viva pelo eterno.',
+     o:'Pai, que eu trabalhe com a eternidade em vista. Que eu busque resultado sem perder o que de fato importa. Que o meu coração esteja no tesouro certo. Amém.'},
+    {t:'Termine o ciclo com fé',
+     m:'Você chegou ao fim de um ciclo. Talvez tenha sido um mês duro, talvez vitorioso, provavelmente os dois. O que importa não é só o que você produziu — é que você permaneceu. Olhe pra trás com gratidão e pra frente com fé. O próximo ciclo começa com um Deus que não muda.',
+     h:'Paulo, no fim da vida, escreveu: "combati o bom combate, completei a carreira, guardei a fé" (2 Timóteo 4:7). Note: ele não disse "venci todas as batalhas". Disse que combateu, completou e guardou a fé. No fim, fidelidade vale mais que troféu.',
+     o:'Senhor, obrigado por me sustentar neste ciclo. Pelas vitórias e pelas lições. Que eu comece o próximo com fé renovada, sabendo que Tu não mudas. Que eu combata o bom combate. Amém.'}
+  ];
+
+  // ---- Devocional do dia: rotaciona pelo ciclo de 30 dias ----
+  function devocionalDoDia(){
+    const inicio=new Date(2026,0,1); // âncora fixa
+    const hoje=new Date();
+    const dias=Math.floor((hoje-inicio)/86400000);
+    const idx=((dias % DEVOCIONAIS.length)+DEVOCIONAIS.length)%DEVOCIONAIS.length;
+    return {d:DEVOCIONAIS[idx],idx};
+  }
+  function devocionalCard(){
+    const {d,idx}=devocionalDoDia();
+    const hojeStr=today();
+    const feito=(S.devocionalFeito&&S.devocionalFeito[hojeStr]);
+    return `<div class="card" style="background:linear-gradient(135deg,rgba(95,200,255,.10),var(--panel));
+      border-color:var(--gold-dim)">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
+        <div style="font-size:24px">🙏</div>
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--gold-2);font-weight:700;letter-spacing:1px;
+            text-transform:uppercase">Devocional do dia · ${idx+1} de ${DEVOCIONAIS.length}</div>
+          <h2 style="font-size:18px;margin-top:2px">${esc(d.t)}</h2>
+        </div>
+        ${feito?`<span class="pill green" style="padding:4px 12px">✅ Feito hoje</span>`:''}
+      </div>
+      <div style="font-size:13.5px;line-height:1.75;color:var(--txt);margin-bottom:14px">
+        ${esc(d.m)}</div>
+      <div style="background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;
+        padding:13px 15px;margin-bottom:13px">
+        <div style="font-size:10px;color:var(--gold-2);font-weight:700;letter-spacing:.8px;
+          text-transform:uppercase;margin-bottom:6px">📖 História bíblica aplicável</div>
+        <div style="font-size:13px;line-height:1.7;color:var(--txt-2)">${esc(d.h)}</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(95,200,255,.13),var(--panel-2));
+        border:1px solid var(--gold-dim);border-radius:10px;padding:13px 15px;margin-bottom:14px">
+        <div style="font-size:10px;color:var(--gold-2);font-weight:700;letter-spacing:.8px;
+          text-transform:uppercase;margin-bottom:6px">🕊️ Oração guiada</div>
+        <div style="font-size:13px;line-height:1.7;font-style:italic;color:var(--txt)">${esc(d.o)}</div>
+      </div>
+      <button class="btn ${feito?'':'gold'}" data-act="devoFeito" style="width:100%">
+        ${feito?'✅ Devocional concluído — volte amanhã':'✓ Marcar devocional como feito'}</button>
+    </div>`;
+  }
+
+  // ---- mini widget de tarefas para o dashboard ----
+  function tarefasMini(){
+    const prioRank={alta:0,media:1,baixa:2};
+    const prioEmoji={alta:'🔴',media:'🟡',baixa:'🔵'};
+    const pend=(S.tasks||[]).filter(t=>!t.done).sort((a,b)=>{
+      const p=(prioRank[a.prio]??1)-(prioRank[b.prio]??1);
+      return p!==0?p:(a.hora||'99:99').localeCompare(b.hora||'99:99');
+    });
+    return `<div class="card">
+      <div class="card-head"><h2>✅ Tarefas do Dia</h2>
+        <div class="spacer"></div>
+        <span style="font-size:11px;color:var(--txt-3)">${pend.length} pendente(s)</span>
+        <button class="btn sm" data-tab="tarefas">Gerenciar →</button></div>
+      <div class="form" style="max-width:680px;margin-bottom:12px">
+        <div class="fld full"><label>➕ Nova tarefa rápida</label>
+          <input id="t_txt" placeholder="O que precisa ser feito hoje?" maxlength="160"></div>
+        <div class="fld"><label>⏰ Horário</label><input type="time" id="t_hora"></div>
+        <div class="fld"><label>🚩 Prioridade</label><select id="t_prio">
+          <option value="alta">🔴 Alta</option>
+          <option value="media" selected>🟡 Média</option>
+          <option value="baixa">🔵 Baixa</option></select></div>
+      </div>
+      <button class="btn gold" data-act="addTask" style="margin-bottom:14px">➕ Adicionar</button>
+      ${pend.length? `<div style="display:flex;flex-direction:column;gap:8px">
+        ${pend.slice(0,6).map(t=>`<div style="display:flex;align-items:center;gap:11px;
+          background:var(--panel-2);border:1px solid var(--line-soft);border-radius:9px;padding:10px 12px">
+          <button class="btn sm" data-done-task="${t.id}" style="padding:3px 9px">✓</button>
+          <div style="flex:1;font-weight:600;font-size:12.5px">${esc(t.txt)}</div>
+          <span style="font-size:10.5px;color:var(--txt-3)">${t.hora?'⏰ '+t.hora:''}</span>
+          <span class="pill ${{alta:'red',media:'amber',baixa:'blue'}[t.prio]||'gray'}" style="padding:1px 7px">
+            ${prioEmoji[t.prio]||''}</span>
+        </div>`).join('')}
+        ${pend.length>6?`<div style="font-size:11px;color:var(--txt-3);text-align:center;padding-top:4px">
+          +${pend.length-6} tarefa(s) — veja em "Gerenciar"</div>`:''}
+      </div>` : `<div style="font-size:12px;color:var(--txt-3);text-align:center;padding:14px">
+        🎉 Nenhuma tarefa pendente. Dia limpo!</div>`}
+    </div>`;
+  }
+
   function viewDash(){
     const k=kpis();
     return `
@@ -367,31 +669,32 @@
       ${S.config.backendUrl?`${syncBadge()}<button class="btn" data-act="syncNow">↻ Atualizar</button>`:''}
       ${rangeBar()}
     </div>
+    ${versiculoCard()}
     <div class="kpis">
       <div class="kpi"><div class="lbl">💬 Conversas iniciadas</div>
         <div class="val">${fmtN(k.conversas)}</div><div class="hint">leads no WhatsApp</div></div>
       <div class="kpi"><div class="lbl">💵 Custo por conversa</div>
         <div class="val">${fmtBRL(k.custoConversa)}</div><div class="hint">investimento ÷ conversas</div></div>
-      <div class="kpi"><div class="lbl">🛒 Compras (Payt)</div>
+      <div class="kpi"><div class="lbl">🛒 Compras ${k.fontePayt?'(Payt)':'(Meta)'}</div>
         <div class="val">${fmtN(k.comprasPlataforma)}</div>
-        <div class="hint">${fmtN(k.comprasMeta)} reportadas pela Meta</div></div>
+        <div class="hint">${k.fontePayt?fmtN(k.comprasMeta)+' reportadas pela Meta':'fonte: Meta (Payt ainda não conectada)'}</div></div>
       <div class="kpi"><div class="lbl">✅ Compras aprovadas</div>
-        <div class="val">${fmtN(k.comprasAprov)}</div><div class="hint">${k.taxaAprov.toFixed(0)}% de aprovação</div></div>
+        <div class="val">${fmtN(k.comprasAprov)}</div><div class="hint">${k.fontePayt?k.taxaAprov.toFixed(0)+'% de aprovação':'pendente da Payt'}</div></div>
       <div class="kpi hero"><div class="lbl">📈 ROAS</div>
         <div class="val ${k.roas>=2?'gold':''}">${k.roas.toFixed(2)}x</div>
-        <div class="hint">receita ÷ investimento</div></div>
+        <div class="hint">receita ÷ investimento${k.fontePayt?'':' (Meta)'}</div></div>
       <div class="kpi"><div class="lbl">🎯 CPA geral</div>
-        <div class="val">${fmtBRL(k.cpa)}</div><div class="hint">investimento ÷ vendas aprov.</div></div>
+        <div class="val">${fmtBRL(k.cpa)}</div><div class="hint">investimento ÷ vendas</div></div>
       <div class="kpi"><div class="lbl">🧾 Ticket médio</div>
-        <div class="val gold">${fmtBRL(k.ticket)}</div><div class="hint">receita ÷ vendas aprov.</div></div>
+        <div class="val gold">${fmtBRL(k.ticket)}</div><div class="hint">receita ÷ vendas</div></div>
       <div class="kpi"><div class="lbl">💸 Investimento Ads</div>
         <div class="val">${fmtBRL(k.investimento)}</div><div class="hint">CPM ${fmtBRL(k.cpm)} · CTR ${fmtPct(k.ctr)}</div></div>
       <div class="kpi"><div class="lbl">🔢 Leads por venda</div>
         <div class="val">${k.leadsPorVenda?k.leadsPorVenda.toFixed(1):'—'}</div>
-        <div class="hint">conversas ÷ vendas aprov.</div></div>
-      <div class="kpi"><div class="lbl">💎 Receita aprovada</div>
+        <div class="hint">conversas ÷ vendas</div></div>
+      <div class="kpi"><div class="lbl">💎 Receita ${k.fontePayt?'aprovada':'(Meta)'}</div>
         <div class="val gold">${fmtBRL(k.receita)}</div>
-        <div class="hint">de ${fmtBRL(k.receitaTotal)} gerados</div></div>
+        <div class="hint">${k.fontePayt?'de '+fmtBRL(k.receitaTotal)+' gerados':'valor reportado pela Meta'}</div></div>
     </div>
 
     <div class="card">
@@ -401,22 +704,19 @@
       ${campaignTable()}
     </div>
 
-    <div class="split">
-      <div class="card">
-        <div class="card-head"><h2>🏦 Desempenho por conta</h2></div>
-        ${accountPerfTable()}
-      </div>
-      <div class="card">
-        <div class="card-head"><h2>🔻 Funil</h2></div>
-        ${funnelView(k)}
-      </div>
+    <div class="card">
+      <div class="card-head"><h2>🏦 Desempenho por conta</h2></div>
+      ${accountPerfTable()}
     </div>
 
     <div class="card">
       <div class="card-head"><h2>🧾 Últimas vendas</h2><div class="spacer"></div>
         <button class="btn sm" data-tab="vendas">Ver todas →</button></div>
       ${salesTable(S.sales.slice().sort((a,b)=>b.data.localeCompare(a.data)).slice(0,8),true)}
-    </div>`;
+    </div>
+
+    ${tarefasMini()}
+    ${devocionalCard()}`;
   }
 
   function campaignTable(){
@@ -433,8 +733,11 @@
     });
     const rows=Object.values(map).map(c=>{
       const a=aggTraf(c.rows);
-      return {nome:c.nome,...a,vendas:c.vendas,rec:c.rec,
-        cpa:c.vendas?a.investimento/c.vendas:0, roas:a.investimento?c.rec/a.investimento:0};
+      // se a campanha não tem venda Payt, usa o que o Meta reportou
+      const vendas = c.vendas>0? c.vendas : a.comprasMeta;
+      const rec = c.vendas>0? c.rec : a.valorComprasMeta;
+      return {nome:c.nome,...a,vendas,rec,
+        cpa:vendas?a.investimento/vendas:0, roas:a.investimento?rec/a.investimento:0};
     }).sort((a,b)=>b.investimento-a.investimento);
     const tot=rows.reduce((t,r)=>{['investimento','conversas','vendas','rec'].forEach(k=>t[k]=(t[k]||0)+r[k]);return t;},{});
     return `<div class="tbl-wrap"><table>
@@ -469,8 +772,10 @@
       const tf=S.trafego.filter(t=>inRange(t.data)&&t.accountId===a.id);
       const sl=S.sales.filter(s=>inRange(s.data)&&s.accountId===a.id&&s.status==='aprovada');
       const ag=aggTraf(tf);
-      const rec=sl.reduce((x,s)=>x+(+s.valor||0),0);
-      return {a,inv:ag.investimento,rec,vendas:sl.length,roas:ag.investimento?rec/ag.investimento:0};
+      const recPayt=sl.reduce((x,s)=>x+(+s.valor||0),0);
+      const vendas = sl.length>0? sl.length : ag.comprasMeta;
+      const rec = sl.length>0? recPayt : ag.valorComprasMeta;
+      return {a,inv:ag.investimento,rec,vendas,roas:ag.investimento?rec/ag.investimento:0};
     });
     if(!rows.some(r=>r.inv||r.rec)) return emptyBox('Sem dados no período.');
     const max=Math.max(...rows.map(r=>r.roas),0.01);
@@ -480,7 +785,7 @@
         <td><b>${esc(r.a.nome)}</b></td>
         <td class="num">${fmtBRL(r.inv)}</td>
         <td class="num" style="color:var(--gold-2)">${fmtBRL(r.rec)}</td>
-        <td class="num">${r.vendas}</td>
+        <td class="num">${fmtN(r.vendas)}</td>
         <td class="num"><b>${r.roas.toFixed(2)}x</b>
           <div class="mini-bar"><i style="width:${Math.min(100,r.roas/max*100)}%"></i></div></td>
       </tr>`).join('')}</tbody></table></div>`;
@@ -536,10 +841,12 @@
       const tf=S.trafego.filter(t=>inRange(t.data)&&t.accountId===a.id);
       const sl=S.sales.filter(s=>inRange(s.data)&&s.accountId===a.id&&s.status==='aprovada');
       const ag=aggTraf(tf);
-      const rec=sl.reduce((x,s)=>x+(+s.valor||0),0);
-      return {a,ag,rec,vendas:sl.length,
+      const recPayt=sl.reduce((x,s)=>x+(+s.valor||0),0);
+      const vendas = sl.length>0? sl.length : ag.comprasMeta;
+      const rec = sl.length>0? recPayt : ag.valorComprasMeta;
+      return {a,ag,rec,vendas,
         roas:ag.investimento?rec/ag.investimento:0,
-        cpa:sl.length?ag.investimento/sl.length:0};
+        cpa:vendas?ag.investimento/vendas:0};
     });
     if(!rows.some(r=>r.ag.investimento)) return emptyBox('🛰️ Sem dados. Rode "Sincronizar Meta Ads" em Configurações.');
     return `<div class="tbl-wrap"><table>
@@ -726,6 +1033,197 @@
     </div>`;
   }
 
+  // ---------- TAREFAS DO DIA ----------
+  function viewTarefas(){
+    const tasks=(S.tasks||[]).slice();
+    // pendentes ordenadas por prioridade depois horário
+    const prioRank={alta:0,media:1,baixa:2};
+    const pend=tasks.filter(t=>!t.done).sort((a,b)=>{
+      const p=(prioRank[a.prio]??1)-(prioRank[b.prio]??1);
+      if(p!==0) return p;
+      return (a.hora||'99:99').localeCompare(b.hora||'99:99');
+    });
+    const feitas=tasks.filter(t=>t.done);
+    const prioPill={alta:'red',media:'amber',baixa:'blue'};
+    const prioEmoji={alta:'🔴',media:'🟡',baixa:'🔵'};
+    return `
+    <div class="topbar">
+      <div><h1>✅ Tarefas do Dia</h1>
+        <div class="sub">${pend.length} pendente(s) · controle diário</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>➕ Nova tarefa</h2></div>
+      <div class="form" style="max-width:680px">
+        <div class="fld full"><label>Tarefa</label>
+          <input id="t_txt" placeholder="O que precisa ser feito?" maxlength="160"></div>
+        <div class="fld"><label>⏰ Horário</label><input type="time" id="t_hora"></div>
+        <div class="fld"><label>🚩 Prioridade</label><select id="t_prio">
+          <option value="alta">🔴 Alta</option>
+          <option value="media" selected>🟡 Média</option>
+          <option value="baixa">🔵 Baixa</option></select></div>
+      </div>
+      <div style="margin-top:12px"><button class="btn gold" data-act="addTask">➕ Adicionar tarefa</button></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>📋 Pendentes</h2></div>
+      ${pend.length? `<div style="display:flex;flex-direction:column;gap:9px">
+        ${pend.map(t=>`<div style="display:flex;align-items:center;gap:12px;
+          background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;padding:12px 14px">
+          <button class="btn sm" data-done-task="${t.id}" style="padding:4px 10px">✓ Concluir</button>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px">${esc(t.txt)}</div>
+            <div style="font-size:11px;color:var(--txt-3);margin-top:2px">
+              ${t.hora?'⏰ '+t.hora+'  ·  ':''}<span class="pill ${prioPill[t.prio]||'gray'}" style="padding:1px 8px">
+              ${prioEmoji[t.prio]||''} ${t.prio||'média'}</span></div>
+          </div>
+          <button class="btn sm danger" data-del-task="${t.id}" style="padding:4px 8px">×</button>
+        </div>`).join('')}
+      </div>` : emptyBox('🎉 Nenhuma tarefa pendente. Dia limpo!')}
+    </div>
+    ${feitas.length? `<div class="card">
+      <div class="card-head"><h2>✅ Concluídas hoje (${feitas.length})</h2>
+        <div class="spacer"></div>
+        <button class="btn sm" data-act="clearDone">🗑️ Limpar concluídas</button></div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        ${feitas.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+          font-size:12.5px;color:var(--txt-3)">
+          <span>✅</span><span style="text-decoration:line-through">${esc(t.txt)}</span>
+          ${t.hora?`<span style="font-size:10.5px">⏰ ${t.hora}</span>`:''}
+        </div>`).join('')}
+      </div></div>`:''}`;
+  }
+
+  // ---------- CRIATIVOS / COPY (editor duplo) ----------
+  function ensureDocs(){
+    if(!S.docs) S.docs=[];
+    if(!S.docs.length){
+      S.docs.push({id:uid(),nome:'Copy 1',html:'',status:'teste',at:Date.now()});
+      S.docs.push({id:uid(),nome:'Copy 2',html:'',status:'teste',at:Date.now()});
+    }
+    S.docs.forEach(d=>{if(!d.status)d.status='teste';});
+    if(!docLeft||!S.docs.find(d=>d.id===docLeft)) docLeft=S.docs[0].id;
+    if(!docRight||!S.docs.find(d=>d.id===docRight)) docRight=S.docs[Math.min(1,S.docs.length-1)].id;
+  }
+  function docSelect(side){
+    const cur=side==='L'?docLeft:docRight;
+    return `<select class="ctl" data-doc-select="${side}">
+      ${S.docs.map(d=>`<option value="${d.id}" ${d.id===cur?'selected':''}>${esc(d.nome)}</option>`).join('')}
+    </select>`;
+  }
+  function editorPane(side){
+    const id=side==='L'?docLeft:docRight;
+    const doc=S.docs.find(d=>d.id===id)||S.docs[0];
+    const fmt=[
+      ['bold','𝐁','Negrito'],['italic','𝘐','Itálico'],['underline','U̲','Sublinhado'],
+      ['strikeThrough','S̶','Riscado']
+    ];
+    return `<div style="display:flex;flex-direction:column;background:var(--panel);
+      border:1px solid var(--line);border-radius:13px;overflow:hidden;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap">
+        ${docSelect(side)}
+        <input class="ctl" data-doc-rename="${side}" value="${esc(doc.nome)}"
+          style="flex:1;min-width:60px" placeholder="Nome do doc">
+        <select class="ctl" data-doc-status="${side}">
+          <option value="teste" ${doc.status==='teste'?'selected':''}>🧪 Em Teste</option>
+          <option value="modelada" ${doc.status==='modelada'?'selected':''}>✏️ Modelada</option>
+          <option value="validada" ${doc.status==='validada'?'selected':''}>✅ Validada</option>
+        </select>
+        <button class="btn sm" data-doc-new="${side}">＋ Novo</button>
+        <button class="btn sm" data-doc-copy="${side}">📋 Copiar</button>
+        <button class="btn sm danger" data-doc-del="${side}">🗑️</button>
+      </div>
+      <div class="copytoolbar" style="display:flex;flex-wrap:wrap;gap:3px;padding:7px 10px;
+        border-bottom:1px solid var(--line-soft);background:var(--panel-2)">
+        ${fmt.map(([cmd,lbl,t])=>`<button class="ebtn" data-cmd="${cmd}" data-side="${side}" title="${t}">${lbl}</button>`).join('')}
+        <span style="width:1px;background:var(--line);margin:2px 4px"></span>
+        <button class="ebtn" data-cmd="formatBlock" data-val="h2" data-side="${side}" title="Título">H</button>
+        <button class="ebtn" data-cmd="insertUnorderedList" data-side="${side}" title="Lista">•</button>
+        <span style="width:1px;background:var(--line);margin:2px 4px"></span>
+        <button class="ebtn" data-color="#e0655c" data-side="${side}" title="Vermelho"
+          style="background:#e0655c">A</button>
+        <button class="ebtn" data-color="#3fae6b" data-side="${side}" title="Verde"
+          style="background:#3fae6b">A</button>
+        <button class="ebtn" data-color="#5b8fb0" data-side="${side}" title="Azul"
+          style="background:#5b8fb0">A</button>
+        <button class="ebtn" data-color="#b08920" data-side="${side}" title="Dourado"
+          style="background:#b08920">A</button>
+        <span style="width:1px;background:var(--line);margin:2px 4px"></span>
+        <button class="ebtn" data-hilite="#fff3a0" data-side="${side}" title="Destaque amarelo"
+          style="background:#fff3a0;color:#000">🖍️</button>
+        <button class="ebtn" data-hilite="#b6e7c9" data-side="${side}" title="Destaque verde"
+          style="background:#b6e7c9;color:#000">🖍️</button>
+        <button class="ebtn" data-cmd="removeFormat" data-side="${side}" title="Limpar formatação">✕</button>
+      </div>
+      <div class="copydoc" contenteditable="true" data-editor="${side}" data-docid="${doc.id}"
+        style="flex:1;min-height:440px;padding:16px 18px;outline:none;font-size:14px;
+        line-height:1.7;overflow:auto;font-family:Arial,Helvetica,sans-serif">${doc.html||''}</div>
+      <div style="display:flex;align-items:center;gap:9px;padding:9px 12px;
+        border-top:1px solid var(--line-soft);background:var(--panel-2);flex-wrap:wrap">
+        <button class="btn gold sm" data-doc-save="${side}">💾 Salvar</button>
+        <button class="btn sm" data-doc-saveas="${side}">✨ Salvar como nova</button>
+        <span data-save-state="${side}" style="font-size:10.5px;color:var(--txt-3)">rascunho</span>
+        <div class="spacer"></div>
+        <button class="btn sm" data-doc-clear="${side}" title="Limpar editor">🧹 Limpar</button>
+      </div>
+    </div>`;
+  }
+  function viewCriativos(){
+    ensureDocs();
+    return `
+    <div class="topbar">
+      <div><h1>✍️ Criativos / Copy</h1>
+        <div class="sub">${S.docs.length} documento(s) · escreva e remodele lado a lado</div></div>
+    </div>
+    <div class="card" style="padding:14px">
+      <div class="desc" style="margin:0">💡 Dois editores lado a lado: escreva a copy num, copie pro outro
+      e remodele comparando. Cada lado escolhe qual documento mostrar. Tudo salva sozinho.</div>
+    </div>
+    <div class="copy-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      ${editorPane('L')}
+      ${editorPane('R')}
+    </div>
+    <div class="card" style="margin-top:18px">
+      <div class="card-head"><h2>📚 Minhas Copies</h2>
+        <div class="spacer"></div>
+        <span style="font-size:11px;color:var(--txt-3)">clique pra abrir num dos editores</span></div>
+      <div data-copylist>${copyList()}</div>
+    </div>`;
+  }
+
+  function copyList(){
+    if(!S.docs||!S.docs.length) return emptyBox('Nenhuma copy salva ainda.');
+    const stInfo={
+      validada:['green','✅ Validada'],
+      modelada:['amber','✏️ Modelada'],
+      teste:['blue','🧪 Em Teste']
+    };
+    // ordena: validada > modelada > teste, depois mais recente
+    const rank={validada:0,modelada:1,teste:2};
+    const docs=S.docs.slice().sort((a,b)=>{
+      const r=(rank[a.status]??2)-(rank[b.status]??2);
+      return r!==0?r:(b.at||0)-(a.at||0);
+    });
+    return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:11px">
+      ${docs.map(d=>{
+        const [cor,lbl]=stInfo[d.status]||stInfo.teste;
+        const txt=(d.html||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+        const preview=txt?txt.slice(0,90)+(txt.length>90?'…':''):'(vazio)';
+        return `<div style="background:var(--panel-2);border:1px solid var(--line-soft);
+          border-radius:11px;padding:13px;display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <b style="font-size:13px;flex:1">${esc(d.nome)}</b>
+            <span class="pill ${cor}" style="padding:2px 8px">${lbl}</span>
+          </div>
+          <div style="font-size:11px;color:var(--txt-3);line-height:1.5;min-height:32px">${esc(preview)}</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn sm" data-copy-open-l="${d.id}" style="flex:1">◧ Abrir esquerda</button>
+            <button class="btn sm" data-copy-open-r="${d.id}" style="flex:1">Abrir direita ◨</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
   // ---------- CONFIG ----------
   function viewConfig(){
     return `
@@ -902,10 +1400,35 @@
         S.config.token=V('backendToken');
         save();toast('💾 Conexão salva');startPolling();render();break;
       case 'syncNow':syncBackend(false);break;
-      case 'syncMeta':syncMeta('last_30d',false);break;
+      case 'syncMeta':
+        syncMeta('last_30d',false).then(()=>syncMeta('today',true));
+        break;
       case 'doImportCsv':importCsv();break;
       case 'doImportJson':importJson();break;
       case 'exportJson':exportJson();break;
+      case 'addTask':{
+        const txt=V('t_txt');
+        if(!txt){toast('Escreva a tarefa');break;}
+        if(!S.tasks)S.tasks=[];
+        S.tasks.push({id:uid(),txt,hora:V('t_hora'),prio:V('t_prio')||'media',
+          done:false,criada:Date.now()});
+        persist();toast('➕ Tarefa adicionada');break;
+      }
+      case 'clearDone':
+        S.tasks=(S.tasks||[]).filter(t=>!t.done);
+        persist();toast('🗑️ Concluídas limpas');break;
+      case 'devoFeito':{
+        if(!S.devocionalFeito)S.devocionalFeito={};
+        const hj=today();
+        if(S.devocionalFeito[hj]){
+          delete S.devocionalFeito[hj];
+          toast('Devocional desmarcado');
+        }else{
+          S.devocionalFeito[hj]=true;
+          toast('🙏 Que seu dia seja abençoado!');
+        }
+        persist();break;
+      }
       case 'seedDemo':seedDemo();break;
       case 'wipe':
         if(confirm('Zerar TODOS os dados? Não dá pra desfazer.')){
@@ -1108,7 +1631,7 @@
       const v=b.dataset.r;
       if(v==='custom'){modalCustom();return;}
       customRange=null;
-      filterRange=(v==='all'||v==='today')?v:+v;
+      filterRange=(v==='all'||v==='today'||v==='yesterday')?v:+v;
       render();
     });
     const af=document.getElementById('accFilter');
@@ -1120,6 +1643,11 @@
     del('[data-del-sale]','sales','Venda');
     del('[data-del-order]','orders','Pedido');
     del('[data-del-ctwa]','ctwa','Registro');
+    del('[data-del-task]','tasks','Tarefa');
+    document.querySelectorAll('[data-done-task]').forEach(b=>b.onclick=()=>{
+      const t=(S.tasks||[]).find(x=>x.id===b.dataset.doneTask);
+      if(t){t.done=true;t.feitaEm=Date.now();persist();toast('✅ Tarefa concluída!');}
+    });
     document.querySelectorAll('[data-toggle-ctwa]').forEach(b=>b.onclick=()=>{
       const c=S.ctwa.find(x=>x.id===b.dataset.toggleCtwa);
       if(c){c.enviadoMeta=!c.enviadoMeta;persist();}
@@ -1136,6 +1664,123 @@
       col.ondrop=e=>{e.preventDefault();col.classList.remove('over');
         if(drag)applyDrop(drag,col.dataset.drop);};
     });
+
+    // ---- editor de copy ----
+    function curDocId(side){return side==='L'?docLeft:docRight;}
+    function editorEl(side){return document.querySelector(`[data-editor="${side}"]`);}
+    function setSaveState(side,txt,cor){
+      const el=document.querySelector(`[data-save-state="${side}"]`);
+      if(el){el.textContent=txt;el.style.color=cor||'var(--txt-3)';}
+    }
+    // ao digitar: marca como "não salvo" (não grava — só salva no botão)
+    document.querySelectorAll('[data-editor]').forEach(ed=>{
+      ed.oninput=()=>setSaveState(ed.dataset.editor,'● não salvo','var(--amber)');
+    });
+    // SALVAR MANUAL — grava o conteúdo do editor no documento
+    document.querySelectorAll('[data-doc-save]').forEach(b=>b.onclick=()=>{
+      const side=b.dataset.docSave;
+      const ed=editorEl(side); if(!ed)return;
+      const d=S.docs.find(x=>x.id===curDocId(side));
+      if(d){
+        d.html=ed.innerHTML; d.at=Date.now();
+        save();
+        setSaveState(side,'✓ salvo','var(--green)');
+        toast('💾 Copy salva na lista');
+        // re-renderiza só a lista de baixo
+        const lista=document.querySelector('[data-copylist]');
+        if(lista) lista.innerHTML=copyList();
+      }
+    });
+    // SALVAR COMO NOVA — cria uma copy nova com o conteúdo do editor
+    document.querySelectorAll('[data-doc-saveas]').forEach(b=>b.onclick=()=>{
+      const side=b.dataset.docSaveas;
+      const ed=editorEl(side); if(!ed)return;
+      if(!ed.innerHTML.trim()){toast('Editor vazio — escreva algo primeiro');return;}
+      const nome=prompt('Nome da nova copy:','Copy '+(S.docs.length+1));
+      if(nome===null)return;
+      const novo={id:uid(),nome:nome.trim()||'Copy '+(S.docs.length+1),
+        html:ed.innerHTML,status:'teste',at:Date.now()};
+      S.docs.push(novo);
+      if(side==='L')docLeft=novo.id; else docRight=novo.id;
+      persist();
+      toast('✨ Nova copy salva na lista');
+    });
+    // limpar editor (não apaga o salvo — só o rascunho na tela)
+    document.querySelectorAll('[data-doc-clear]').forEach(b=>b.onclick=()=>{
+      const ed=editorEl(b.dataset.docClear);
+      if(ed && confirm('Limpar o texto do editor? (o que está salvo na lista continua)')){
+        ed.innerHTML='';
+        setSaveState(b.dataset.docClear,'● não salvo','var(--amber)');
+      }
+    });
+    // botões de formatação
+    document.querySelectorAll('.ebtn').forEach(b=>b.onclick=e=>{
+      e.preventDefault();
+      const side=b.dataset.side;
+      const ed=editorEl(side); if(ed)ed.focus();
+      if(b.dataset.color){ document.execCommand('foreColor',false,b.dataset.color); }
+      else if(b.dataset.hilite){ document.execCommand('hiliteColor',false,b.dataset.hilite); }
+      else if(b.dataset.cmd==='formatBlock'){ document.execCommand('formatBlock',false,b.dataset.val); }
+      else if(b.dataset.cmd){ document.execCommand(b.dataset.cmd,false,null); }
+      setSaveState(side,'● não salvo','var(--amber)');
+    });
+    // trocar documento no lado
+    document.querySelectorAll('[data-doc-select]').forEach(s=>s.onchange=()=>{
+      const side=s.dataset.docSelect;
+      if(side==='L')docLeft=s.value; else docRight=s.value;
+      render();
+    });
+    // renomear documento
+    document.querySelectorAll('[data-doc-rename]').forEach(inp=>{
+      inp.onchange=()=>{
+        const d=S.docs.find(x=>x.id===curDocId(inp.dataset.docRename));
+        if(d){d.nome=inp.value.trim()||'Sem nome';persist();}
+      };
+    });
+    // novo documento
+    document.querySelectorAll('[data-doc-new]').forEach(b=>b.onclick=()=>{
+      const side=b.dataset.docNew;
+      const novo={id:uid(),nome:'Copy '+(S.docs.length+1),html:'',status:'teste',at:Date.now()};
+      S.docs.push(novo);
+      if(side==='L')docLeft=novo.id; else docRight=novo.id;
+      persist();toast('📄 Novo documento criado');
+    });
+    // copiar conteúdo do documento
+    document.querySelectorAll('[data-doc-copy]').forEach(b=>b.onclick=async()=>{
+      const ed=editorEl(b.dataset.docCopy);
+      if(!ed)return;
+      try{
+        await navigator.clipboard.writeText(ed.innerText);
+        toast('📋 Copy copiada!');
+      }catch(e){
+        // fallback: seleciona o texto
+        const r=document.createRange();r.selectNodeContents(ed);
+        const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);
+        document.execCommand('copy');sel.removeAllRanges();
+        toast('📋 Copy copiada!');
+      }
+    });
+    // apagar documento
+    document.querySelectorAll('[data-doc-del]').forEach(b=>b.onclick=()=>{
+      if(S.docs.length<=1){toast('Precisa ter ao menos 1 documento');return;}
+      const id=curDocId(b.dataset.docDel);
+      if(!confirm('Apagar este documento? Não dá pra desfazer.'))return;
+      S.docs=S.docs.filter(d=>d.id!==id);
+      docLeft=null;docRight=null;
+      persist();toast('🗑️ Documento apagado');
+    });
+    // mudar status do documento
+    document.querySelectorAll('[data-doc-status]').forEach(s=>s.onchange=()=>{
+      const d=S.docs.find(x=>x.id===curDocId(s.dataset.docStatus));
+      if(d){d.status=s.value;persist();toast('Status atualizado');}
+    });
+    // abrir copy da lista num dos lados
+    document.querySelectorAll('[data-copy-open-l]').forEach(b=>b.onclick=()=>{
+      docLeft=b.dataset.copyOpenL;render();
+    });
+    document.querySelectorAll('[data-copy-open-r]').forEach(b=>b.onclick=()=>{
+      docRight=b.dataset.copyOpenR;render();
+    });
   }
 
   // ================= BOOT =================
@@ -1146,7 +1791,8 @@
     render();
     if(S.config.backendUrl){
       await syncBackend(true);
-      syncMeta('today',true);
+      // tráfego não é salvo no storage — repopula puxando 30 dias no boot
+      syncMeta('last_30d',true).then(()=>syncMeta('today',true));
       startPolling();
     }
   }
