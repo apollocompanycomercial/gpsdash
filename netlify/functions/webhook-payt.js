@@ -10,6 +10,33 @@ function mapStatus(s) {
   return "recusada";
 }
 
+// status de envio dos Correios -> texto legível em PT
+function mapEnvio(s) {
+  const k = String(s || "").toLowerCase();
+  const mapa = {
+    "waiting_code": "Aguardando código de rastreio",
+    "posted": "Postado nos Correios",
+    "shipping": "Em trânsito",
+    "in_transit": "Em trânsito",
+    "out_for_delivery": "Saiu para entrega",
+    "delivered": "Entregue",
+    "returned": "Devolvido",
+    "lost": "Extraviado",
+    "problem": "Problema na entrega",
+    "waiting": "Aguardando postagem",
+  };
+  return mapa[k] || (s ? String(s) : "Aguardando");
+}
+// status de envio -> coluna do Kanban de Pedidos
+function envioParaColuna(s) {
+  const k = String(s || "").toLowerCase();
+  if (/deliver/.test(k)) return "entregue";
+  if (/transit|shipping|out_for/.test(k)) return "transito";
+  if (/posted/.test(k)) return "postado";
+  if (/return|lost|problem/.test(k)) return "problema";
+  return "pendente";
+}
+
 export default async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (!checkToken(req)) return json({ error: "token invalido" }, 401);
@@ -40,12 +67,40 @@ export default async (req) => {
   const statusRaw = trans.payment_status || body.status || "";
   const dataRaw = trans.paid_at || trans.created_at || body.started_at || body.updated_at || new Date().toISOString();
 
+  // endereço de entrega — monta uma linha legível
+  const ad = shipping.address || customer.billing_address || {};
+  const enderecoLinha = [
+    ad.street, ad.street_number, ad.complement, ad.district,
+    ad.city, ad.state, ad.zipcode
+  ].filter(Boolean).join(", ");
+
+  // origem da venda: procura comissão do tipo "affiliation"
+  const comissoes = Array.isArray(body.commission) ? body.commission : [];
+  const afil = comissoes.find((c) => String(c.type).toLowerCase() === "affiliation");
+  const origem = afil ? "afiliado" : "propria";
+  const afiliado = afil ? (afil.name || "Afiliado") : "";
+  const afiliadoEmail = afil ? (afil.email || "") : "";
+
   const sale = {
     id,
     data: String(dataRaw).slice(0, 10),
     produto: product.name || (product.items && product.items[0] && product.items[0].name) || "Produto",
     cliente: customer.name || "",
     telefone,
+    email,
+    doc: customer.doc || "",
+    endereco: enderecoLinha,
+    enderecoObj: {
+      rua: ad.street||"", numero: ad.street_number||"", complemento: ad.complement||"",
+      bairro: ad.district||"", cidade: ad.city||"", uf: ad.state||"", cep: ad.zipcode||""
+    },
+    tracking: shipping.tracking_code || "",
+    trackingUrl: shipping.tracking_url || "",
+    envioStatus: mapEnvio(shipping.status),
+    envioStatusRaw: shipping.status || "",
+    origem,
+    afiliado,
+    afiliadoEmail,
     valor,
     status: mapStatus(statusRaw),
     tipo: "",
@@ -79,9 +134,11 @@ export default async (req) => {
     const ord = {
       id, ref: extId, cliente: sale.cliente, produto: sale.produto,
       valor: sale.valor,
-      status: shipping.status === "shipping" ? "enviado" : "pendente",
+      status: envioParaColuna(shipping.status),
+      envioStatus: mapEnvio(shipping.status),
       transportadora: shipping.service || "",
       tracking: shipping.tracking_code || "",
+      trackingUrl: shipping.tracking_url || "",
     };
     if (oi >= 0) orders[oi] = { ...orders[oi], ...ord };
     else orders.unshift(ord);

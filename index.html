@@ -322,6 +322,10 @@
     const receitaPayt=aprov.reduce((x,s)=>x+(+s.valor||0),0);
     const receitaTotal=sl.reduce((x,s)=>x+(+s.valor||0),0);
     const comprasAprovPayt=aprov.length;
+    const vendasAfiliado=aprov.filter(s=>s.origem==='afiliado').length;
+    const vendasPropria=aprov.filter(s=>s.origem!=='afiliado').length;
+    const receitaAfiliado=aprov.filter(s=>s.origem==='afiliado').reduce((x,s)=>x+(+s.valor||0),0);
+    const receitaPropria=aprov.filter(s=>s.origem!=='afiliado').reduce((x,s)=>x+(+s.valor||0),0);
     // as duas fontes coexistem — Payt (real) e Meta (reportado). Nunca uma esconde a outra.
     const temPayt = aprov.length>0;
     // ROAS/CPA/ticket: usa Payt se houver venda aprovada; senão o reportado pela Meta
@@ -333,6 +337,7 @@
       // contagens das DUAS fontes, sempre disponíveis
       comprasMeta:a.comprasMeta, valorComprasMeta:a.valorComprasMeta,
       comprasPayt:sl.length, comprasAprovPayt,
+      vendasAfiliado, vendasPropria, receitaAfiliado, receitaPropria,
       comprasPlataforma:temPayt? sl.length : a.comprasMeta,
       comprasAprov,
       receita, receitaPayt, receitaTotal,
@@ -701,6 +706,12 @@
       <div class="kpi"><div class="lbl">💎 Receita</div>
         <div class="val gold">${fmtBRL(k.receita)}</div>
         <div class="hint">${k.fontePayt?'Payt · Meta reporta '+fmtBRL(k.valorComprasMeta):'reportado pelo Meta'}</div></div>
+      <div class="kpi"><div class="lbl">🏠 Vendas próprias</div>
+        <div class="val">${fmtN(k.vendasPropria)}</div>
+        <div class="hint">${fmtBRL(k.receitaPropria)} em receita</div></div>
+      <div class="kpi"><div class="lbl">🤝 Vendas de afiliados</div>
+        <div class="val">${fmtN(k.vendasAfiliado)}</div>
+        <div class="hint">${fmtBRL(k.receitaAfiliado)} em receita</div></div>
     </div>
 
     <div class="card">
@@ -965,7 +976,106 @@
       <div class="kmeta"><span>${esc(s.cliente||'—')}</span><span class="kval">${fmtBRL(+s.valor)}</span></div>
       <div class="kmeta"><span class="pill ${st}" style="padding:1px 7px">${s.status}</span>
         <span>${esc(acc?acc.nome:'')}</span><span>${s.data}</span></div>
+      ${s.envioStatus?`<div class="kmeta" style="margin-top:4px">
+        <span class="pill blue" style="padding:1px 7px">🚚 ${esc(s.envioStatus)}</span>
+        ${s.tracking?`<span style="font-size:10px;color:var(--txt-3)">${esc(s.tracking)}</span>`:''}</div>`:''}
+      <div class="kmeta" style="margin-top:4px">
+        <span class="pill ${s.origem==='afiliado'?'amber':'green'}" style="padding:1px 7px">
+        ${s.origem==='afiliado'?'🤝 Afiliado':'🏠 Venda própria'}</span>
+        ${s.origem==='afiliado'&&s.afiliado?`<span style="font-size:10px;color:var(--txt-3)">${esc(s.afiliado)}</span>`:''}</div>
+      <div style="margin-top:7px"><button class="btn sm" data-sale-detail="${s.id}"
+        style="width:100%;padding:3px">👤 Ver dados do cliente</button></div>
     </div>`;
+  }
+
+  // modal com o cadastro completo do cliente
+  function saleDetailModal(id){
+    const s=S.sales.find(x=>x.id===id);
+    if(!s) return '';
+    const e=s.enderecoObj||{};
+    const linha=(lbl,val)=>val?`<div style="display:flex;gap:10px;padding:7px 0;
+      border-bottom:1px solid var(--line-soft)">
+      <div style="font-size:11px;color:var(--txt-3);min-width:120px;font-weight:600">${lbl}</div>
+      <div style="font-size:13px;flex:1">${esc(val)}</div></div>`:'';
+    return `<div class="ov" id="ov"><div class="modal" style="max-width:480px">
+      <div class="card-head"><h2>👤 Dados do Cliente</h2>
+        <div class="spacer"></div>
+        <button class="btn sm" data-act="closeModal">✕</button></div>
+      <div style="margin-top:6px">
+        ${linha('Produto',s.produto)}
+        ${linha('Valor',fmtBRL(+s.valor))}
+        ${linha('Nome',s.cliente)}
+        ${linha('Tratamento',s.tratamento||tratamentoDe(s.cliente))}
+        ${linha('WhatsApp',s.telefone)}
+        ${linha('E-mail',s.email)}
+        ${linha('CPF',s.doc)}
+        ${linha('Endereço',s.endereco)}
+        ${linha('Rua',e.rua)}
+        ${linha('Número',e.numero)}
+        ${linha('Complemento',e.complemento)}
+        ${linha('Bairro',e.bairro)}
+        ${linha('Cidade',e.cidade)}
+        ${linha('UF',e.uf)}
+        ${linha('CEP',e.cep)}
+        ${linha('📦 Status de envio',s.envioStatus)}
+        ${linha('Código de rastreio',s.tracking)}
+        ${s.trackingUrl?`<div style="padding:7px 0;border-bottom:1px solid var(--line-soft)">
+          <a href="${esc(s.trackingUrl)}" target="_blank" style="font-size:12px;color:var(--gold-2)">
+          🔗 Rastrear nos Correios</a></div>`:''}
+        ${linha('Origem da venda',s.origem==='afiliado'?'🤝 Afiliado':'🏠 Venda própria')}
+        ${linha('Nome do afiliado',s.origem==='afiliado'?s.afiliado:'')}
+        ${linha('Status do pagamento',s.status)}
+        ${linha('Data',s.data)}
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn gold sm" data-edit-cliente="${s.id}" style="flex:1">✏️ Editar cliente</button>
+        <button class="btn sm" data-copy-cliente="${s.id}" style="flex:1">📋 Copiar dados</button>
+        ${s.telefone?`<a class="btn sm" style="flex:1;text-align:center;text-decoration:none"
+          href="https://wa.me/${String(s.telefone).replace(/\D/g,'')}" target="_blank">💬 WhatsApp</a>`:''}
+      </div>
+    </div></div>`;
+  }
+
+  // modal de EDIÇÃO do cliente
+  function saleEditModal(id){
+    const s=S.sales.find(x=>x.id===id);
+    if(!s) return '';
+    const e=s.enderecoObj||{};
+    const f=(lbl,key,val)=>`<div class="fld"><label>${lbl}</label>
+      <input data-ef="${key}" value="${esc(val||'')}"></div>`;
+    return `<div class="ov" id="ov"><div class="modal" style="max-width:520px">
+      <div class="card-head"><h2>✏️ Editar Cliente</h2>
+        <div class="spacer"></div>
+        <button class="btn sm" data-act="closeModal">✕</button></div>
+      <div class="form" style="margin-top:8px" data-edit-id="${id}">
+        ${f('Produto','produto',s.produto)}
+        ${f('Valor (R$)','valor',s.valor)}
+        ${f('Nome do cliente','cliente',s.cliente)}
+        ${f('Tratamento','tratamento',s.tratamento||tratamentoDe(s.cliente))}
+        ${f('WhatsApp','telefone',s.telefone)}
+        ${f('E-mail','email',s.email)}
+        ${f('CPF','doc',s.doc)}
+        ${f('Rua','rua',e.rua)}
+        ${f('Número','numero',e.numero)}
+        ${f('Complemento','complemento',e.complemento)}
+        ${f('Bairro','bairro',e.bairro)}
+        ${f('Cidade','cidade',e.cidade)}
+        ${f('UF','uf',e.uf)}
+        ${f('CEP','cep',e.cep)}
+        ${f('Rastreio','tracking',s.tracking)}
+      </div>
+      <div class="modal-foot" style="margin-top:12px">
+        <button class="btn" data-act="closeModal">Cancelar</button>
+        <button class="btn gold" data-save-cliente="${id}">💾 Salvar alterações</button>
+      </div>
+    </div></div>`;
+  }
+  // deduz Sr./Sra. — heurística simples pelo primeiro nome
+  function tratamentoDe(nome){
+    if(!nome) return '';
+    const p=String(nome).trim().split(/\s+/)[0].toLowerCase();
+    // nomes femininos comuns terminam em 'a' (heurística — pode ajustar manual)
+    return /a$/.test(p)?'Sra.':'Sr.';
   }
 
   // ---------- KANBAN PEDIDOS ----------
@@ -1672,6 +1782,60 @@
     del('[data-del-order]','orders','Pedido');
     del('[data-del-ctwa]','ctwa','Registro');
     del('[data-del-task]','tasks','Tarefa');
+    // abrir detalhes do cliente
+    document.querySelectorAll('[data-sale-detail]').forEach(b=>b.onclick=(e)=>{
+      e.stopPropagation();
+      modal=saleDetailModal(b.dataset.saleDetail);
+      render();
+    });
+    // copiar dados do cliente
+    document.querySelectorAll('[data-copy-cliente]').forEach(b=>b.onclick=async()=>{
+      const s=S.sales.find(x=>x.id===b.dataset.copyCliente);
+      if(!s)return;
+      const e=s.enderecoObj||{};
+      const txt=[
+        'Produto: '+s.produto,
+        'Nome: '+s.cliente,
+        'Tratamento: '+(s.tratamento||tratamentoDe(s.cliente)),
+        'WhatsApp: '+s.telefone,
+        'E-mail: '+(s.email||'—'),
+        'CPF: '+(s.doc||'—'),
+        'Endereço: '+(s.endereco||'—'),
+        'CEP: '+(e.cep||'—'),
+        'Rastreio: '+(s.tracking||'—')
+      ].join('\n');
+      try{await navigator.clipboard.writeText(txt);toast('📋 Dados copiados');}
+      catch(err){toast('Não foi possível copiar');}
+    });
+    // abrir edição do cliente
+    document.querySelectorAll('[data-edit-cliente]').forEach(b=>b.onclick=()=>{
+      modal=saleEditModal(b.dataset.editCliente);
+      render();
+    });
+    // salvar edição do cliente
+    document.querySelectorAll('[data-save-cliente]').forEach(b=>b.onclick=()=>{
+      const id=b.dataset.saveCliente;
+      const s=S.sales.find(x=>x.id===id);
+      if(!s)return;
+      const get=(k)=>{const el=document.querySelector(`[data-ef="${k}"]`);return el?el.value.trim():'';};
+      s.produto=get('produto');
+      s.valor=parseFloat(String(get('valor')).replace(',','.'))||0;
+      s.cliente=get('cliente');
+      s.tratamento=get('tratamento');
+      s.telefone=get('telefone');
+      s.email=get('email');
+      s.doc=get('doc');
+      s.tracking=get('tracking');
+      s.enderecoObj={rua:get('rua'),numero:get('numero'),complemento:get('complemento'),
+        bairro:get('bairro'),cidade:get('cidade'),uf:get('uf'),cep:get('cep')};
+      s.endereco=[s.enderecoObj.rua,s.enderecoObj.numero,s.enderecoObj.complemento,
+        s.enderecoObj.bairro,s.enderecoObj.cidade,s.enderecoObj.uf,s.enderecoObj.cep]
+        .filter(Boolean).join(', ');
+      s.editado=true; // marca como editado — o reprocess preserva
+      modal=null;
+      persist();
+      toast('💾 Cliente atualizado');
+    });
     document.querySelectorAll('[data-done-task]').forEach(b=>b.onclick=()=>{
       const t=(S.tasks||[]).find(x=>x.id===b.dataset.doneTask);
       if(t){t.done=true;t.feitaEm=Date.now();persist();toast('✅ Tarefa concluída!');}
