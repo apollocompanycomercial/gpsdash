@@ -4,9 +4,11 @@
 // Envs: META_TOKEN, META_ACCOUNTS, META_API_VERSION (opcional)
 import { writeArr, checkToken, json } from "./_store.js";
 
-async function fetchAll(url) {
+async function fetchAll(url, deadline) {
   let rows = [], next = url, guard = 0;
   while (next && guard < 30) {
+    // para de paginar se estiver perto do limite de tempo da function
+    if (deadline && Date.now() > deadline) break;
     const r = await fetch(next);
     const d = await r.json();
     if (d.error) throw new Error(d.error.message);
@@ -31,15 +33,21 @@ export default async (req) => {
   const token = process.env.META_TOKEN;
   if (!token) return json({ error: "META_TOKEN nao configurado" }, 400);
 
-  const accounts = (process.env.META_ACCOUNTS || "")
+  const accountsAll = (process.env.META_ACCOUNTS || "")
     .split(",").map((s) => s.trim()).filter(Boolean);
-  if (!accounts.length) return json({ error: "META_ACCOUNTS nao configurado" }, 400);
+  if (!accountsAll.length) return json({ error: "META_ACCOUNTS nao configurado" }, 400);
 
   const v = process.env.META_API_VERSION || "v22.0";
-  const preset = new URL(req.url).searchParams.get("preset") || "last_14d";
+  const sp = new URL(req.url).searchParams;
+  const preset = sp.get("preset") || "last_14d";
+  // ?acc=ID processa só uma conta (divide a carga e evita timeout)
+  const only = sp.get("acc");
+  const accounts = only ? accountsAll.filter((a) => a === only) : accountsAll;
 
   const campaigns = [];
   const admap = {};
+  // limite interno: 8s — devolve o que conseguiu antes do Netlify cortar (10s)
+  const deadline = Date.now() + 8000;
 
   // campos: gasto, impressoes, cliques, video, e o budget vem da campanha
   const fields = [
@@ -57,7 +65,7 @@ export default async (req) => {
       `&limit=300&access_token=${encodeURIComponent(token)}`;
 
     let rows;
-    try { rows = await fetchAll(url); }
+    try { rows = await fetchAll(url, deadline); }
     catch (e) { campaigns.push({ metaId: acc, error: String(e.message || e) }); continue; }
 
     const byCamp = {};
@@ -105,5 +113,5 @@ export default async (req) => {
   }
 
   await writeArr("admap", Object.entries(admap).map(([adId, m]) => ({ adId, ...m })));
-  return json({ campaigns, preset });
+  return json({ campaigns, preset, accountsAll });
 };
