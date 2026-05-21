@@ -62,9 +62,15 @@ export default async (req) => {
     // origem: afiliado ou venda própria
     const comissoes = Array.isArray(body.commission) ? body.commission : [];
     const afil = comissoes.find((c) => String(c.type).toLowerCase() === "affiliation");
-    const origem = afil ? "afiliado" : "propria";
-    const afiliado = afil ? (afil.name || "Afiliado") : "";
+    const ATENDENTES = ["jhonny", "gabriel ramos", "gabriel henrique"];
+    const afilNome = afil ? (afil.name || "Afiliado") : "";
+    const ehAtendente = ATENDENTES.some((a) => afilNome.toLowerCase().includes(a));
+    const origem = (afil && !ehAtendente) ? "afiliado" : "propria";
+    const afiliado = afil ? afilNome : "";
     const afiliadoEmail = afil ? (afil.email || "") : "";
+    const prodNome = product.name || "";
+    const mU = prodNome.match(/(\d+)\s*(unidad|frasc|pote)/i);
+    const potes = mU ? Number(mU[1]) : 1;
 
     const sale = {
       id,
@@ -86,6 +92,9 @@ export default async (req) => {
       origem,
       afiliado,
       afiliadoEmail,
+      quemVendeu: origem === "afiliado" ? afiliado : (afiliado || "Apollo"),
+      potes,
+      anotacoes: "",
       valor,
       status: mapStatus(trans.payment_status || body.status || ""),
       tipo: "",
@@ -109,10 +118,10 @@ export default async (req) => {
   }
 
   const sales = await readArr("sales");
-  // preserva o que o usuário editou manualmente (tipo classificado no Kanban)
+  // preserva o que o usuário editou/anotou manualmente
   const editadas = {};
   sales.forEach((s) => {
-    if (String(s.id).startsWith("payt:") && (s.tipo || s.editado)) editadas[s.id] = s;
+    if (String(s.id).startsWith("payt:") && (s.tipo || s.editado || s.anotacoes)) editadas[s.id] = s;
   });
 
   // mantém vendas que NÃO são Payt (Red Rocket, manuais)
@@ -121,10 +130,15 @@ export default async (req) => {
   // reconstrói as Payt — uma por ID, aplicando edições manuais por cima
   const paytFinais = Object.values(byId).map((s) => {
     const ed = editadas[s.id];
-    return ed ? { ...s, tipo: ed.tipo || "", editado: ed.editado,
+    if (!ed) return s;
+    return { ...s,
+      tipo: ed.tipo || "",
+      editado: ed.editado,
+      anotacoes: ed.anotacoes || "",
       cliente: ed.editado ? ed.cliente : s.cliente,
       telefone: ed.editado ? ed.telefone : s.telefone,
-      endereco: ed.editado ? ed.endereco : s.endereco } : s;
+      tratamento: ed.editado && ed.tratamento ? ed.tratamento : s.tratamento,
+      endereco: ed.editado ? ed.endereco : s.endereco };
   });
 
   const novasSales = [...paytFinais, ...naoPayt];
@@ -134,13 +148,20 @@ export default async (req) => {
   const naoPaytOrders = orders.filter((o) => !String(o.id).startsWith("payt:"));
   const paytOrders = paytFinais.filter((s) => s.status === "aprovada").map((s) => {
     const ext = s.id.replace("payt:", "");
+    // link de rastreio dos Correios — monta se não veio pronto
+    let trackUrl = s.trackingUrl || "";
+    if (!trackUrl && s.tracking) {
+      trackUrl = "https://rastreamento.correios.com.br/app/index.php?objetos=" + s.tracking;
+    }
     return {
       id: s.id, ref: ext, cliente: s.cliente, produto: s.produto, valor: s.valor,
+      telefone: s.telefone || "", endereco: s.endereco || "",
       status: envioParaColuna(s.envioStatusRaw),
       envioStatus: s.envioStatus || "Aguardando",
       transportadora: "",
       tracking: s.tracking || "",
-      trackingUrl: s.trackingUrl || "",
+      trackingUrl: trackUrl,
+      anotacoes: s.anotacoes || "",
     };
   });
 

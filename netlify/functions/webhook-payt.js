@@ -77,9 +77,17 @@ export default async (req) => {
   // origem da venda: procura comissão do tipo "affiliation"
   const comissoes = Array.isArray(body.commission) ? body.commission : [];
   const afil = comissoes.find((c) => String(c.type).toLowerCase() === "affiliation");
-  const origem = afil ? "afiliado" : "propria";
-  const afiliado = afil ? (afil.name || "Afiliado") : "";
+  // atendentes que contam como venda PRÓPRIA (mesmo aparecendo como afiliado na Payt)
+  const ATENDENTES = ["jhonny", "gabriel ramos", "gabriel henrique"];
+  const afilNome = afil ? (afil.name || "Afiliado") : "";
+  const ehAtendente = ATENDENTES.some((a) => afilNome.toLowerCase().includes(a));
+  const origem = (afil && !ehAtendente) ? "afiliado" : "propria";
+  const afiliado = afil ? afilNome : "";
   const afiliadoEmail = afil ? (afil.email || "") : "";
+  // potes: extrai o número de "Unidades" / "Frascos" no nome do produto
+  const prodNome = product.name || "";
+  const mU = prodNome.match(/(\d+)\s*(unidad|frasc|pote)/i);
+  const potes = mU ? Number(mU[1]) : 1;
 
   const sale = {
     id,
@@ -101,6 +109,9 @@ export default async (req) => {
     origem,
     afiliado,
     afiliadoEmail,
+    quemVendeu: origem === "afiliado" ? afiliado : (afiliado || "Apollo"),
+    potes,
+    anotacoes: "",
     valor,
     status: mapStatus(statusRaw),
     tipo: "",
@@ -131,14 +142,19 @@ export default async (req) => {
   if (sale.status === "aprovada") {
     const orders = await readArr("orders");
     const oi = orders.findIndex((x) => x.id === id);
+    let trackUrl = shipping.tracking_url || "";
+    if (!trackUrl && shipping.tracking_code) {
+      trackUrl = "https://rastreamento.correios.com.br/app/index.php?objetos=" + shipping.tracking_code;
+    }
     const ord = {
       id, ref: extId, cliente: sale.cliente, produto: sale.produto,
-      valor: sale.valor,
+      valor: sale.valor, telefone: sale.telefone || "", endereco: sale.endereco || "",
       status: envioParaColuna(shipping.status),
       envioStatus: mapEnvio(shipping.status),
       transportadora: shipping.service || "",
       tracking: shipping.tracking_code || "",
-      trackingUrl: shipping.tracking_url || "",
+      trackingUrl: trackUrl,
+      anotacoes: (oi >= 0 ? orders[oi].anotacoes : "") || "",
     };
     if (oi >= 0) orders[oi] = { ...orders[oi], ...ord };
     else orders.unshift(ord);

@@ -228,6 +228,7 @@
   let syncState={status:'idle',at:null};
   let customRange=null; // {de,ate}
   let docLeft=null, docRight=null; // ids dos docs nos dois lados
+  let filtroOrigem='todas'; // todas | minhas | afiliados
 
   // ---- storage ----
   async function load(){
@@ -322,10 +323,24 @@
     const receitaPayt=aprov.reduce((x,s)=>x+(+s.valor||0),0);
     const receitaTotal=sl.reduce((x,s)=>x+(+s.valor||0),0);
     const comprasAprovPayt=aprov.length;
-    const vendasAfiliado=aprov.filter(s=>s.origem==='afiliado').length;
-    const vendasPropria=aprov.filter(s=>s.origem!=='afiliado').length;
-    const receitaAfiliado=aprov.filter(s=>s.origem==='afiliado').reduce((x,s)=>x+(+s.valor||0),0);
-    const receitaPropria=aprov.filter(s=>s.origem!=='afiliado').reduce((x,s)=>x+(+s.valor||0),0);
+    // origem: Jhonny, Gabriel Ramos e Apollo contam como "minhas"
+    const ehMinha=(s)=>{
+      if(s.origem!=='afiliado') return true;
+      const n=String(s.afiliado||'').toLowerCase();
+      return /jhonny|gabriel ramos|gabriel henrique|apollo/.test(n);
+    };
+    const vendasAfiliado=aprov.filter(s=>!ehMinha(s)).length;
+    const vendasPropria=aprov.filter(s=>ehMinha(s)).length;
+    const receitaAfiliado=aprov.filter(s=>!ehMinha(s)).reduce((x,s)=>x+(+s.valor||0),0);
+    const receitaPropria=aprov.filter(s=>ehMinha(s)).reduce((x,s)=>x+(+s.valor||0),0);
+    // potes vendidos (soma a quantidade extraída do nome do produto)
+    const potesVendidos=aprov.reduce((x,s)=>x+(+s.potes||1),0);
+    // status logístico dos pedidos
+    const ords=S.orders.filter(o=>true);
+    const pedEntregues=ords.filter(o=>o.status==='entregue').length;
+    const pedPostados=ords.filter(o=>o.status==='postado').length;
+    const pedRota=ords.filter(o=>o.status==='transito').length;
+    const pedSemRastreio=ords.filter(o=>!o.tracking).length;
     // as duas fontes coexistem — Payt (real) e Meta (reportado). Nunca uma esconde a outra.
     const temPayt = aprov.length>0;
     // ROAS/CPA/ticket: usa Payt se houver venda aprovada; senão o reportado pela Meta
@@ -338,6 +353,7 @@
       comprasMeta:a.comprasMeta, valorComprasMeta:a.valorComprasMeta,
       comprasPayt:sl.length, comprasAprovPayt,
       vendasAfiliado, vendasPropria, receitaAfiliado, receitaPropria,
+      potesVendidos, pedEntregues, pedPostados, pedRota, pedSemRastreio,
       comprasPlataforma:temPayt? sl.length : a.comprasMeta,
       comprasAprov,
       receita, receitaPayt, receitaTotal,
@@ -712,6 +728,18 @@
       <div class="kpi"><div class="lbl">🤝 Vendas de afiliados</div>
         <div class="val">${fmtN(k.vendasAfiliado)}</div>
         <div class="hint">${fmtBRL(k.receitaAfiliado)} em receita</div></div>
+      <div class="kpi"><div class="lbl">📦 Potes vendidos</div>
+        <div class="val gold">${fmtN(k.potesVendidos)}</div>
+        <div class="hint">unidades em vendas aprovadas</div></div>
+      <div class="kpi" data-tab="vendas" style="cursor:pointer"><div class="lbl">✅ Pedidos entregues</div>
+        <div class="val">${fmtN(k.pedEntregues)}</div><div class="hint">clique para ver na aba Vendas</div></div>
+      <div class="kpi" data-tab="vendas" style="cursor:pointer"><div class="lbl">📮 Pedidos postados</div>
+        <div class="val">${fmtN(k.pedPostados)}</div><div class="hint">clique para ver na aba Vendas</div></div>
+      <div class="kpi" data-tab="vendas" style="cursor:pointer"><div class="lbl">🚚 Pedidos em rota</div>
+        <div class="val">${fmtN(k.pedRota)}</div><div class="hint">clique para ver na aba Vendas</div></div>
+      <div class="kpi" data-tab="vendas" style="cursor:pointer"><div class="lbl">❓ Pedidos sem rastreio</div>
+        <div class="val ${k.pedSemRastreio>0?'':''}">${fmtN(k.pedSemRastreio)}</div>
+        <div class="hint">clique para ver na aba Vendas</div></div>
     </div>
 
     <div class="card">
@@ -901,55 +929,89 @@
 
   // ---------- VENDAS ----------
   function viewVendas(){
+    const vendas=S.sales.slice().sort((a,b)=>b.data.localeCompare(a.data));
+    const aprov=vendas.filter(s=>s.status==='aprovada');
+    const ehMinha=(s)=>{
+      if(s.origem!=='afiliado') return true;
+      return /jhonny|gabriel ramos|gabriel henrique|apollo/.test(String(s.afiliado||'').toLowerCase());
+    };
+    const totalVendas=aprov.length;
+    const valorTotal=aprov.reduce((x,s)=>x+(+s.valor||0),0);
+    const valorAfiliado=aprov.filter(s=>!ehMinha(s)).reduce((x,s)=>x+(+s.valor||0),0);
+    const valorProdutor=aprov.filter(s=>ehMinha(s)).reduce((x,s)=>x+(+s.valor||0),0);
+    const potes=aprov.reduce((x,s)=>x+(+s.potes||1),0);
+    const card=(lbl,val,cor)=>`<div class="kpi"><div class="lbl">${lbl}</div>
+      <div class="val ${cor||''}">${val}</div></div>`;
     return `
     <div class="topbar">
       <div><h1>💰 Vendas / WebHook</h1>
-        <div class="sub">Vendas da Payt e Red Rocket</div></div>
+        <div class="sub">Vendas da Payt e Red Rocket · ${vendas.length} registro(s)</div></div>
       <div class="spacer"></div>
       <button class="btn" data-act="importCsv">⇪ Importar CSV</button>
       <button class="btn gold" data-act="addSale">＋ Nova venda</button>
     </div>
+    <div class="kpis" style="margin-bottom:16px">
+      ${card('🧾 Total de vendas',fmtN(totalVendas))}
+      ${card('💰 Valor total vendido',fmtBRL(valorTotal),'gold')}
+      ${card('🏠 Valor — Produtor (minhas)',fmtBRL(valorProdutor),'gold')}
+      ${card('🤝 Valor — Afiliados',fmtBRL(valorAfiliado))}
+      ${card('📦 Potes vendidos',fmtN(potes),'gold')}
+    </div>
     <div class="card">
-      <div class="desc">🔗 As vendas chegam automaticamente via WebHook (Payt e Red Rocket) e alimentam
-      os KPIs, o Kanban After Pay e o de Pedidos. Também dá pra adicionar manual ou importar CSV
-      (<code>data,conta,produto,cliente,valor,status,tipo</code>).</div>
-      ${salesTable(S.sales.slice().sort((a,b)=>b.data.localeCompare(a.data)),false)}
+      <div class="card-head"><h2>📋 Todas as vendas</h2></div>
+      ${salesTable(vendas,false)}
     </div>`;
   }
 
   function salesTable(list,compact){
     if(!list.length) return emptyBox('Nenhuma venda registrada.');
-    const srcPill={webhook:'🔗 WebHook',payt:'Payt',redrocket:'Red Rocket'};
     return `<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Produto / Cliente</th>
-      <th>Conta</th><th class="num">Valor</th><th>Status</th><th>Tipo</th>${compact?'':'<th></th>'}</tr></thead>
+      <th>Quem vendeu</th><th class="num">Valor</th><th>Pagamento</th><th>Envio</th><th>Tipo</th>${compact?'':'<th></th>'}</tr></thead>
       <tbody>${list.map(s=>{
-        const acc=S.accounts.find(a=>a.id===s.accountId);
         const st={aprovada:'green',pendente:'amber',recusada:'red'}[s.status]||'gray';
         const stE={aprovada:'✅',pendente:'⏳',recusada:'❌'}[s.status]||'';
         const tp=s.tipo==='afterpay'?'<span class="pill blue">🔄 After Pay</span>'
           :s.tipo==='upfront'?'<span class="pill gold">💳 Antecipado</span>'
           :'<span class="pill gray">A classificar</span>';
+        const ehMinha=s.origem!=='afiliado'||/jhonny|gabriel ramos|gabriel henrique|apollo/.test(String(s.afiliado||'').toLowerCase());
+        const vendedor=ehMinha
+          ? `<span class="pill green" style="padding:1px 7px">🏠 ${esc(s.afiliado||'Apollo')}</span>`
+          : `<span class="pill amber" style="padding:1px 7px">🤝 ${esc(s.afiliado||'Afiliado')}</span>`;
         const src=s.source==='webhook'?` <span class="pill gray" style="padding:0 6px;font-size:9px">🔗 auto</span>`:'';
         return `<tr class="row"><td>${s.data}</td>
-          <td><b>${esc(s.produto)}</b>${src}<div style="font-size:10px;color:var(--txt-3)">${esc(s.cliente||'—')}</div></td>
-          <td>${esc(acc?acc.nome:'—')}</td>
+          <td><b>${esc(s.produto)}</b>${src}<div style="font-size:10px;color:var(--txt-3)">${esc(s.cliente||'—')}</div>
+            ${s.anotacoes?`<div style="font-size:10px;color:var(--gold-2);margin-top:2px">📝 ${esc(s.anotacoes)}</div>`:''}</td>
+          <td>${vendedor}</td>
           <td class="num" style="color:var(--gold-2)">${fmtBRL(+s.valor)}</td>
           <td><span class="pill ${st}"><span class="dot"></span>${stE} ${s.status}</span></td>
+          <td>${s.envioStatus?`<span class="pill blue" style="padding:1px 7px">🚚 ${esc(s.envioStatus)}</span>`:'<span style="color:var(--txt-3);font-size:11px">—</span>'}</td>
           <td>${tp}</td>
-          ${compact?'':`<td class="num"><button class="btn sm danger" data-del-sale="${s.id}">×</button></td>`}
+          ${compact?'':`<td class="num"><button class="btn sm" data-sale-detail="${s.id}" style="padding:2px 7px">👤</button>
+            <button class="btn sm danger" data-del-sale="${s.id}">×</button></td>`}
         </tr>`;
       }).join('')}</tbody></table></div>`;
   }
 
   // ---------- KANBAN AFTER PAY ----------
+  function ehMinhaVenda(s){
+    if(s.origem!=='afiliado') return true;
+    return /jhonny|gabriel ramos|gabriel henrique|apollo/.test(String(s.afiliado||'').toLowerCase());
+  }
   function viewAfterpay(){
     const cols=[['','📥 A classificar','gray'],['upfront','💳 Pagamento antecipado','gold'],
       ['afterpay','🔄 After Pay (contra-entrega)','blue']];
+    const filtrar=(arr)=>arr.filter(s=>{
+      if(filtroOrigem==='minhas') return ehMinhaVenda(s);
+      if(filtroOrigem==='afiliados') return !ehMinhaVenda(s);
+      return true;
+    });
+    const segBtn=(v,l)=>`<button data-origem="${v}" class="${filtroOrigem===v?'on':''}">${l}</button>`;
     return `
     <div class="topbar">
       <div><h1>🔄 Kanban — After Pay</h1>
         <div class="sub">Arraste cada venda para o tipo de pagamento</div></div>
       <div class="spacer"></div>
+      <div class="seg">${segBtn('todas','Todas')}${segBtn('minhas','🏠 Minhas')}${segBtn('afiliados','🤝 Afiliados')}</div>
       <button class="btn gold" data-act="addSale">＋ Nova venda</button>
     </div>
     <div class="card">
@@ -957,7 +1019,7 @@
       Mover o card grava o tipo na venda.</div>
       <div class="kanban">
         ${cols.map(([key,label,color])=>{
-          const items=S.sales.filter(s=>(s.tipo||'')===key);
+          const items=filtrar(S.sales.filter(s=>(s.tipo||'')===key));
           return `<div class="col" data-drop="tipo:${key}">
             <div class="col-head"><span class="pill ${color}"><span class="dot"></span></span>
               <b>${label}</b><span class="ct">${items.length}</span></div>
@@ -983,8 +1045,12 @@
         <span class="pill ${s.origem==='afiliado'?'amber':'green'}" style="padding:1px 7px">
         ${s.origem==='afiliado'?'🤝 Afiliado':'🏠 Venda própria'}</span>
         ${s.origem==='afiliado'&&s.afiliado?`<span style="font-size:10px;color:var(--txt-3)">${esc(s.afiliado)}</span>`:''}</div>
-      <div style="margin-top:7px"><button class="btn sm" data-sale-detail="${s.id}"
-        style="width:100%;padding:3px">👤 Ver dados do cliente</button></div>
+      <div style="margin-top:7px;display:flex;gap:6px">
+        <button class="btn sm" data-sale-detail="${s.id}"
+          style="flex:1;padding:3px">👤 Dados</button>
+        <button class="btn sm danger" data-del-sale="${s.id}"
+          style="padding:3px 9px" title="Excluir venda">🗑️</button>
+      </div>
     </div>`;
   }
 
@@ -1107,16 +1173,63 @@
     </div>`;
   }
   function kcardOrder(o){
+    const trackUrl=o.trackingUrl||(o.tracking?'https://rastreamento.correios.com.br/app/index.php?objetos='+o.tracking:'');
     return `<div class="kcard" draggable="true" data-card="order:${o.id}">
       <div class="kname">${esc(o.cliente||'Pedido')}</div>
       <div class="kmeta"><span>${esc(o.produto||'—')}</span>
         ${o.valor?`<span class="kval">${fmtBRL(+o.valor)}</span>`:''}</div>
-      <div class="kmeta">
-        ${o.transportadora?`<span class="pill gray" style="padding:1px 7px">${esc(o.transportadora)}</span>`:''}
-        ${o.tracking?`<span style="font-size:10px">📦 ${esc(o.tracking)}</span>`:'<span style="font-size:10px;color:var(--txt-3)">sem rastreio</span>'}</div>
-      <div style="text-align:right;margin-top:6px">
-        <button class="btn sm danger" data-del-order="${o.id}" style="padding:2px 7px">×</button></div>
+      ${o.envioStatus?`<div class="kmeta" style="margin-top:3px">
+        <span class="pill blue" style="padding:1px 7px">🚚 ${esc(o.envioStatus)}</span></div>`:''}
+      <div class="kmeta" style="margin-top:3px">
+        ${o.tracking?`<span style="font-size:10px">📦 ${esc(o.tracking)}</span>`
+          :'<span style="font-size:10px;color:var(--txt-3)">sem rastreio</span>'}</div>
+      ${o.telefone?`<div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">📱 ${esc(o.telefone)}</div>`:''}
+      ${o.anotacoes?`<div style="font-size:10.5px;background:var(--panel-3);border-radius:6px;
+        padding:5px 7px;margin-top:5px">📝 ${esc(o.anotacoes)}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:7px">
+        ${trackUrl?`<a class="btn sm" href="${esc(trackUrl)}" target="_blank"
+          style="flex:1;text-align:center;text-decoration:none;padding:3px">🔗 Rastrear</a>`:''}
+        <button class="btn sm" data-order-detail="${o.id}" style="flex:1;padding:3px">📝 Abrir</button>
+        <button class="btn sm danger" data-del-order="${o.id}" style="padding:3px 8px">🗑️</button>
+      </div>
     </div>`;
+  }
+
+  // modal de detalhes do pedido (dados do lead + anotações)
+  function orderDetailModal(id){
+    const o=S.orders.find(x=>x.id===id);
+    if(!o) return '';
+    const trackUrl=o.trackingUrl||(o.tracking?'https://rastreamento.correios.com.br/app/index.php?objetos='+o.tracking:'');
+    const linha=(lbl,val)=>val?`<div style="display:flex;gap:10px;padding:7px 0;
+      border-bottom:1px solid var(--line-soft)">
+      <div style="font-size:11px;color:var(--txt-3);min-width:110px;font-weight:600">${lbl}</div>
+      <div style="font-size:13px;flex:1">${esc(val)}</div></div>`:'';
+    return `<div class="ov" id="ov"><div class="modal" style="max-width:480px">
+      <div class="card-head"><h2>📦 Pedido — ${esc(o.cliente||'')}</h2>
+        <div class="spacer"></div>
+        <button class="btn sm" data-act="closeModal">✕</button></div>
+      <div style="margin-top:6px">
+        ${linha('Produto',o.produto)}
+        ${linha('Valor',fmtBRL(+o.valor))}
+        ${linha('Cliente',o.cliente)}
+        ${linha('WhatsApp',o.telefone)}
+        ${linha('Endereço',o.endereco)}
+        ${linha('Status de envio',o.envioStatus)}
+        ${linha('Rastreio',o.tracking)}
+        ${trackUrl?`<div style="padding:7px 0;border-bottom:1px solid var(--line-soft)">
+          <a href="${esc(trackUrl)}" target="_blank" style="font-size:12px;color:var(--gold-2)">
+          🔗 Rastrear nos Correios</a></div>`:''}
+      </div>
+      <div class="fld" style="margin-top:12px"><label>📝 Anotações (aparecem na aba Vendas)</label>
+        <textarea data-order-note="${id}" rows="3"
+          placeholder="Ex: cliente pediu pra entregar à tarde...">${esc(o.anotacoes||'')}</textarea></div>
+      <div class="modal-foot" style="margin-top:10px">
+        <button class="btn" data-act="closeModal">Fechar</button>
+        ${o.telefone?`<a class="btn" style="text-decoration:none"
+          href="https://wa.me/${String(o.telefone).replace(/\D/g,'')}" target="_blank">💬 Chamar no WhatsApp</a>`:''}
+        <button class="btn gold" data-save-order-note="${id}">💾 Salvar anotação</button>
+      </div>
+    </div></div>`;
   }
 
   // ---------- CTWA ----------
@@ -1778,15 +1891,44 @@
         };
       });
     };
-    del('[data-del-sale]','sales','Venda');
+    // excluir venda — remove de sales E dos pedidos (Kanban Pedidos)
+    document.querySelectorAll('[data-del-sale]').forEach(b=>{
+      b.onclick=()=>{
+        const idv=b.getAttribute('data-del-sale');
+        if(!confirm('Excluir esta venda? Sai do Kanban After Pay e do Kanban de Pedidos.'))return;
+        S.sales=S.sales.filter(x=>x.id!==idv);
+        S.orders=S.orders.filter(x=>x.id!==idv);
+        persist();toast('Venda removida');
+      };
+    });
     del('[data-del-order]','orders','Pedido');
     del('[data-del-ctwa]','ctwa','Registro');
     del('[data-del-task]','tasks','Tarefa');
+    document.querySelectorAll('[data-origem]').forEach(b=>b.onclick=()=>{
+      filtroOrigem=b.dataset.origem;render();
+    });
     // abrir detalhes do cliente
     document.querySelectorAll('[data-sale-detail]').forEach(b=>b.onclick=(e)=>{
       e.stopPropagation();
       modal=saleDetailModal(b.dataset.saleDetail);
       render();
+    });
+    // abrir detalhes do pedido
+    document.querySelectorAll('[data-order-detail]').forEach(b=>b.onclick=(e)=>{
+      e.stopPropagation();
+      modal=orderDetailModal(b.dataset.orderDetail);
+      render();
+    });
+    // salvar anotação do pedido (reflete também na venda -> aba Vendas)
+    document.querySelectorAll('[data-save-order-note]').forEach(b=>b.onclick=()=>{
+      const id=b.dataset.saveOrderNote;
+      const ta=document.querySelector(`[data-order-note="${id}"]`);
+      const txt=ta?ta.value:'';
+      const o=S.orders.find(x=>x.id===id);
+      if(o)o.anotacoes=txt;
+      const s=S.sales.find(x=>x.id===id);
+      if(s)s.anotacoes=txt;
+      modal=null;persist();toast('📝 Anotação salva');
     });
     // copiar dados do cliente
     document.querySelectorAll('[data-copy-cliente]').forEach(b=>b.onclick=async()=>{
